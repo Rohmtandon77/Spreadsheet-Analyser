@@ -1,4 +1,4 @@
-"""Job management endpoints: submit, status, results."""
+"""Job management endpoints: submit, status, results, follow-up."""
 
 import uuid
 
@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from backend.app.database import get_session
-from backend.app.models import Artifact, Job, JobStatus, Message, MessageRole
+from backend.app.models import Job, JobStatus, Message, MessageRole
+from backend.app.queue import enqueue_job
 from backend.app.schemas import (
     ArtifactOut,
     JobOut,
@@ -37,19 +38,7 @@ async def submit_job(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # Parse basic metadata from the file
-    row_count, col_count = None, None
-    try:
-        ext = file_path.suffix.lower()
-        if ext == ".csv":
-            df = pd.read_csv(file_path, nrows=0)
-            row_count = sum(1 for _ in open(file_path)) - 1
-        else:
-            df = pd.read_excel(file_path, nrows=0)
-            row_count = len(pd.read_excel(file_path))
-        col_count = len(df.columns)
-    except Exception:
-        pass
+    row_count, col_count = _parse_file_metadata(file_path)
 
     job = Job(
         id=job_id,
@@ -70,8 +59,36 @@ async def submit_job(
     session.add(initial_message)
 
     await session.commit()
+    await enqueue_job(job_id)
 
-    # TODO (Phase 4): enqueue job_id to Redis here
+    return JobSubmitResponse(job_id=job_id)
+
+
+@router.post("/{job_id}/followup", response_model=JobSubmitResponse)
+async def submit_followup(
+    job_id: uuid.UUID,
+    question: str = Form(...),
+    session: AsyncSession = Depends(get_session),
+):
+    """Submit a follow-up question against an existing job."""
+    job = await session.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.status == JobStatus.processing:
+        raise HTTPException(status_code=409, detail="Job is currently processing")
+
+    followup_message = Message(
+        job_id=job_id,
+        role=MessageRole.user,
+        content=question,
+    )
+    session.add(followup_message)
+
+    job.status = JobStatus.pending
+    job.error = None
+
+    await session.commit()
+    await enqueue_job(job_id)
 
     return JobSubmitResponse(job_id=job_id)
 
@@ -109,3 +126,18 @@ async def get_job_results(
         messages=[MessageOut.model_validate(m) for m in job.messages],
         artifacts=[ArtifactOut.model_validate(a) for a in job.artifacts],
     )
+
+
+def _parse_file_metadata(file_path) -> tuple[int | None, int | None]:
+    """Best-effort extraction of row/column counts from an uploaded file."""
+    try:
+        ext = file_path.suffix.lower()
+        if ext == ".csv":
+            df = pd.read_csv(file_path, nrows=0)
+            row_count = sum(1 for _ in open(file_path)) - 1
+        else:
+            df = pd.read_excel(file_path, nrows=0)
+            row_count = len(pd.read_excel(file_path))
+        return row_count, len(df.columns)
+    except Exception:
+        return None, None
