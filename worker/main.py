@@ -2,15 +2,19 @@
 
 import asyncio
 import logging
+import mimetypes
 import signal
 import uuid
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from backend.app.database import async_session, engine
-from backend.app.models import Base, Job, JobStatus, Message, MessageRole
+from backend.app.models import Artifact, ArtifactType, Base, Job, JobStatus, Message, MessageRole
 from backend.app.queue import close_redis, dequeue_job
+from backend.app.storage import job_dir
+from worker.analysis.engine import run_analysis
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,6 +29,15 @@ def _handle_signal(signum, frame):
     global _shutdown
     log.info("Received signal %s, shutting down gracefully ...", signum)
     _shutdown = True
+
+
+def _artifact_type_for(path: Path) -> ArtifactType:
+    ext = path.suffix.lower()
+    if ext in (".png", ".svg"):
+        return ArtifactType.chart
+    if ext in (".csv",):
+        return ArtifactType.table
+    return ArtifactType.processed_file
 
 
 async def process_job(job_id: uuid.UUID) -> None:
@@ -47,39 +60,50 @@ async def process_job(job_id: uuid.UUID) -> None:
         log.info("Processing job %s (file: %s)", job_id, job.original_filename)
 
         try:
-            last_user_msg = None
-            for msg in reversed(job.messages):
-                if msg.role == MessageRole.user:
-                    last_user_msg = msg
-                    break
+            charts_dir = job_dir(job_id) / "charts"
+            charts_dir.mkdir(parents=True, exist_ok=True)
 
-            if last_user_msg is None:
-                raise ValueError("No user message found for job")
-
-            # --- Stub analysis (Phase 5 will replace this) ---
-            answer_text = (
-                f"[STUB] Received your question: \"{last_user_msg.content}\"\n"
-                f"File: {job.original_filename} "
-                f"({job.row_count} rows x {job.column_count} cols)\n"
-                f"Analysis engine not yet implemented."
+            analysis = await asyncio.get_event_loop().run_in_executor(
+                None,
+                run_analysis,
+                job.file_path,
+                charts_dir,
+                list(job.messages),
             )
-            generated_code = None
-            execution_output = None
-            # --- End stub ---
+
+            if analysis.retries_used:
+                log.info("Job %s required %d retry/retries", job_id, analysis.retries_used)
 
             assistant_msg = Message(
                 job_id=job_id,
                 role=MessageRole.assistant,
-                content=answer_text,
-                code=generated_code,
-                execution_output=execution_output,
+                content=analysis.answer,
+                code=analysis.code,
+                execution_output=analysis.execution_output,
             )
             session.add(assistant_msg)
+            await session.flush()  # get assistant_msg.id before adding artifacts
+
+            for chart_path in analysis.chart_paths:
+                mime, _ = mimetypes.guess_type(str(chart_path))
+                artifact = Artifact(
+                    job_id=job_id,
+                    message_id=assistant_msg.id,
+                    type=_artifact_type_for(chart_path),
+                    filename=chart_path.name,
+                    file_path=str(chart_path),
+                    mime_type=mime or "application/octet-stream",
+                )
+                session.add(artifact)
 
             job.status = JobStatus.completed
             job.error = None
             await session.commit()
-            log.info("Job %s completed", job_id)
+            log.info(
+                "Job %s completed (%d chart(s))",
+                job_id,
+                len(analysis.chart_paths),
+            )
 
         except Exception as e:
             log.exception("Job %s failed: %s", job_id, e)

@@ -20,7 +20,7 @@ POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "changeme")
 REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
 
-DATA_DIR: Path = Path(os.getenv("DATA_DIR", "./data"))
+DATA_DIR: Path = Path(os.getenv("DATA_DIR", "./data")).resolve()
 UPLOAD_MAX_SIZE_MB: int = int(os.getenv("UPLOAD_MAX_SIZE_MB", "50"))
 
 SANDBOX_TIMEOUT_SECONDS: int = int(os.getenv("SANDBOX_TIMEOUT_SECONDS", "30"))

@@ -1,6 +1,7 @@
 """Job management endpoints: submit, status, results, follow-up."""
 
 import uuid
+from pathlib import Path
 
 import pandas as pd
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -8,8 +9,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from backend.app.config import DATA_DIR
 from backend.app.database import get_session
-from backend.app.models import Job, JobStatus, Message, MessageRole
+from backend.app.models import Artifact, Job, JobStatus, Message, MessageRole
 from backend.app.queue import enqueue_job
 from backend.app.schemas import (
     ArtifactOut,
@@ -20,6 +22,15 @@ from backend.app.schemas import (
     MessageOut,
 )
 from backend.app.storage import save_upload
+
+
+def _artifact_url(artifact: Artifact) -> str | None:
+    """Convert a file_path to a URL served by the /files static mount."""
+    try:
+        rel = Path(artifact.file_path).relative_to(DATA_DIR.resolve())
+        return f"/files/{rel}"
+    except ValueError:
+        return None
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -121,10 +132,16 @@ async def get_job_results(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
+    artifacts = []
+    for a in job.artifacts:
+        out = ArtifactOut.model_validate(a)
+        out.url = _artifact_url(a)
+        artifacts.append(out)
+
     return JobResultsResponse(
         job=JobOut.model_validate(job),
         messages=[MessageOut.model_validate(m) for m in job.messages],
-        artifacts=[ArtifactOut.model_validate(a) for a in job.artifacts],
+        artifacts=artifacts,
     )
 
 

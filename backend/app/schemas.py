@@ -65,6 +65,7 @@ class ArtifactOut(BaseModel):
     type: ArtifactType
     filename: str
     file_path: str
+    url: str | None = None  # set by the API from file_path
     mime_type: str
     message_id: uuid.UUID | None = None
     created_at: datetime
