@@ -26,3 +26,6 @@ Thumbs.db
 # Model cache
 *.bin
 *.safetensors
+
+# User data files (may contain PII)
+Job Applications.csv

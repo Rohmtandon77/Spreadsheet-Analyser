@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.config import DATA_DIR
@@ -9,6 +11,8 @@ from backend.app.database import engine
 from backend.app.models import Base
 from backend.app.queue import close_redis
 from backend.app.routes.jobs import router as jobs_router
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
 
 @asynccontextmanager
@@ -45,3 +49,8 @@ app.mount("/files", StaticFiles(directory=str(DATA_DIR)), name="files")
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/")
+async def serve_frontend():
+    return FileResponse(FRONTEND_DIR / "index.html")

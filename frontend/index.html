@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spreadsheet Analysis</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f6f8;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    header p {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Upload section */
+    .upload-section {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .drop-zone {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 1rem;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #6366f1;
+      background: #f0f0ff;
+    }
+
+    .drop-zone .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .drop-zone p {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+
+    .drop-zone .file-name {
+      color: #1a1a2e;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      color: #374151;
+    }
+
+    .file-info .remove-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .file-info .remove-btn:hover { color: #ef4444; }
+
+    .question-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .question-row input {
+      flex: 1;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .question-row input:focus { border-color: #6366f1; }
+
+    .btn {
+      padding: 0.65rem 1.25rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-primary {
+      background: #6366f1;
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    /* Chat / conversation */
+    .chat-section {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .chat-header {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .chat-header .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #9ca3af;
+    }
+
+    .chat-header .status-dot.pending { background: #f59e0b; }
+    .chat-header .status-dot.processing { background: #3b82f6; animation: pulse 1s infinite; }
+    .chat-header .status-dot.completed { background: #10b981; }
+    .chat-header .status-dot.failed { background: #ef4444; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .chat-header .status-text {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .chat-header .file-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .messages {
+      padding: 1rem 1.25rem;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin-bottom: 1.25rem;
+    }
+
+    .message .role {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .message.user .role { color: #6366f1; }
+    .message.assistant .role { color: #059669; }
+
+    .message .content {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .message .code-block {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      font-family: "SF Mono", "Fira Code", Consolas, monospace;
+      font-size: 0.8rem;
+      overflow-x: auto;
+      margin-top: 0.5rem;
+      white-space: pre;
+    }
+
+    .message .chart-img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      border: 1px solid #e5e7eb;
+    }
+
+    .message .stdout-block {
+      background: #f1f5f9;
+      color: #334155;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      white-space: pre-wrap;
+    }
+
+    /* Follow-up input */
+    .followup-row {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .followup-row input {
+      flex: 1;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .followup-row input:focus { border-color: #6366f1; }
+
+    /* Error */
+    .error-banner {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #b91c1c;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Spreadsheet Analysis</h1>
+      <p>Upload a CSV or Excel file and ask questions about your data.</p>
+    </header>
+
+    <div id="errorBanner" class="error-banner hidden"></div>
+
+    <!-- Upload Section -->
+    <div id="uploadSection" class="upload-section">
+      <div id="dropZone" class="drop-zone">
+        <div class="icon">&#128196;</div>
+        <p>Drop a CSV or Excel file here, or click to browse</p>
+      </div>
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display:none">
+
+      <div id="fileInfo" class="file-info hidden">
+        <span id="fileInfoName"></span>
+        <button class="remove-btn" id="removeFileBtn">&times;</button>
+      </div>
+
+      <div class="question-row">
+        <input type="text" id="questionInput" placeholder="Ask a question about your data ..." />
+        <button class="btn btn-primary" id="submitBtn" disabled>Analyze</button>
+      </div>
+    </div>
+
+    <!-- Chat Section (shown after first submit) -->
+    <div id="chatSection" class="chat-section hidden">
+      <div class="chat-header">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="file-label" id="chatFileName"></span>
+        <span class="status-text" id="statusText"></span>
+      </div>
+      <div class="messages" id="messagesContainer"></div>
+      <div class="followup-row" id="followupRow">
+        <input type="text" id="followupInput" placeholder="Ask a follow-up question ..." />
+        <button class="btn btn-primary" id="followupBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    let currentJobId = null;
+    let selectedFile = null;
+    let polling = false;
+
+    // DOM elements
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const fileInfo = document.getElementById("fileInfo");
+    const fileInfoName = document.getElementById("fileInfoName");
+    const removeFileBtn = document.getElementById("removeFileBtn");
+    const questionInput = document.getElementById("questionInput");
+    const submitBtn = document.getElementById("submitBtn");
+    const uploadSection = document.getElementById("uploadSection");
+    const chatSection = document.getElementById("chatSection");
+    const chatFileName = document.getElementById("chatFileName");
+    const statusDot = document.getElementById("statusDot");
+    const statusText = document.getElementById("statusText");
+    const messagesContainer = document.getElementById("messagesContainer");
+    const followupInput = document.getElementById("followupInput");
+    const followupBtn = document.getElementById("followupBtn");
+    const followupRow = document.getElementById("followupRow");
+    const errorBanner = document.getElementById("errorBanner");
+
+    // --- File handling ---
+    dropZone.addEventListener("click", () => fileInput.click());
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("drag-over");
+      if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener("change", () => { if (fileInput.files.length) setFile(fileInput.files[0]); });
+    removeFileBtn.addEventListener("click", clearFile);
+
+    function setFile(file) {
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (!["csv", "xlsx", "xls"].includes(ext)) {
+        showError("Only CSV and Excel files are supported.");
+        return;
+      }
+      selectedFile = file;
+      fileInfo.classList.remove("hidden");
+      fileInfoName.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+      dropZone.innerHTML = `<div class="icon">&#9989;</div><p class="file-name">${file.name}</p>`;
+      updateSubmitState();
+    }
+
+    function clearFile() {
+      selectedFile = null;
+      fileInput.value = "";
+      fileInfo.classList.add("hidden");
+      dropZone.innerHTML = `<div class="icon">&#128196;</div><p>Drop a CSV or Excel file here, or click to browse</p>`;
+      updateSubmitState();
+    }
+
+    function updateSubmitState() {
+      submitBtn.disabled = !(selectedFile && questionInput.value.trim());
+    }
+
+    questionInput.addEventListener("input", updateSubmitState);
+    questionInput.addEventListener("keydown", (e) => { if (e.key === "Enter" && !submitBtn.disabled) submitJob(); });
+    submitBtn.addEventListener("click", submitJob);
+    followupBtn.addEventListener("click", submitFollowup);
+    followupInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitFollowup(); });
+
+    // --- API calls ---
+    async function submitJob() {
+      hideError();
+      const question = questionInput.value.trim();
+      if (!selectedFile || !question) return;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting ...";
+
+      const form = new FormData();
+      form.append("file", selectedFile);
+      form.append("question", question);
+
+      try {
+        const res = await fetch(`${API}/jobs`, { method: "POST", body: form });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Submit failed");
+        }
+        const data = await res.json();
+        currentJobId = data.job_id;
+
+        chatFileName.textContent = selectedFile.name;
+        chatSection.classList.remove("hidden");
+        messagesContainer.innerHTML = "";
+        questionInput.value = "";
+        updateSubmitState();
+        setStatus("pending");
+        startPolling();
+      } catch (e) {
+        showError(e.message);
+      } finally {
+        submitBtn.textContent = "Analyze";
+        submitBtn.disabled = false;
+        updateSubmitState();
+      }
+    }
+
+    async function submitFollowup() {
+      const question = followupInput.value.trim();
+      if (!question || !currentJobId) return;
+
+      followupBtn.disabled = true;
+      followupInput.value = "";
+
+      const form = new FormData();
+      form.append("question", question);
+
+      try {
+        const res = await fetch(`${API}/jobs/${currentJobId}/followup`, { method: "POST", body: form });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Follow-up failed");
+        }
+        setStatus("pending");
+        startPolling();
+      } catch (e) {
+        showError(e.message);
+      } finally {
+        followupBtn.disabled = false;
+      }
+    }
+
+    async function startPolling() {
+      if (polling) return;
+      polling = true;
+      followupRow.style.pointerEvents = "none";
+      followupRow.style.opacity = "0.5";
+
+      while (polling) {
+        try {
+          const res = await fetch(`${API}/jobs/${currentJobId}/status`);
+          const data = await res.json();
+          setStatus(data.status);
+
+          if (data.status === "completed" || data.status === "failed") {
+            polling = false;
+            await fetchAndRenderResults();
+            followupRow.style.pointerEvents = "";
+            followupRow.style.opacity = "";
+            followupInput.focus();
+            break;
+          }
+        } catch (e) {
+          console.error("Poll error:", e);
+        }
+        await sleep(1500);
+      }
+    }
+
+    async function fetchAndRenderResults() {
+      const res = await fetch(`${API}/jobs/${currentJobId}/results`);
+      const data = await res.json();
+
+      messagesContainer.innerHTML = "";
+
+      for (const msg of data.messages) {
+        const el = document.createElement("div");
+        el.className = `message ${msg.role}`;
+
+        let html = `<div class="role">${msg.role}</div>`;
+        html += `<div class="content">${escapeHtml(msg.content)}</div>`;
+
+        if (msg.code) {
+          html += `<div class="code-block">${escapeHtml(msg.code)}</div>`;
+        }
+        if (msg.execution_output) {
+          html += `<div class="stdout-block">${escapeHtml(msg.execution_output)}</div>`;
+        }
+
+        el.innerHTML = html;
+        messagesContainer.appendChild(el);
+
+        // Render charts for this message
+        const msgArtifacts = data.artifacts.filter(a => a.message_id === msg.id && a.type === "chart");
+        for (const art of msgArtifacts) {
+          const img = document.createElement("img");
+          img.className = "chart-img";
+          img.src = art.url;
+          img.alt = art.filename;
+          el.appendChild(img);
+        }
+      }
+
+      if (data.job.error) {
+        showError(`Job error: ${data.job.error}`);
+      }
+
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // --- Helpers ---
+    function setStatus(status) {
+      statusDot.className = `status-dot ${status}`;
+      statusText.textContent = status;
+    }
+
+    function showError(msg) {
+      errorBanner.textContent = msg;
+      errorBanner.classList.remove("hidden");
+    }
+
+    function hideError() {
+      errorBanner.classList.add("hidden");
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+  </script>
+</body>
+</html>
