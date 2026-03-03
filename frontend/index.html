@@ -256,6 +256,37 @@
       border: 1px solid #1e293b;
     }
 
+    /* Collapsible sections */
+    .collapsible {
+      margin-top: 0.5rem;
+    }
+
+    .collapsible summary {
+      cursor: pointer;
+      color: #64748b;
+      font-size: 0.78rem;
+      padding: 0.3rem 0;
+      user-select: none;
+      transition: color 0.2s;
+    }
+
+    .collapsible summary:hover { color: #818cf8; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #334155;
+      border-top-color: #818cf8;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+
     .message .stdout-block {
       background: #0f172a;
       color: #38bdf8;
@@ -567,10 +598,10 @@
         html += `<div class="content">${escapeHtml(msg.content)}</div>`;
 
         if (msg.code) {
-          html += `<div class="code-block">${escapeHtml(msg.code)}</div>`;
+          html += `<details class="collapsible"><summary>View code</summary><div class="code-block">${escapeHtml(msg.code)}</div></details>`;
         }
         if (msg.execution_output) {
-          html += `<div class="stdout-block">${escapeHtml(msg.execution_output)}</div>`;
+          html += `<details class="collapsible"><summary>Execution output</summary><div class="stdout-block">${escapeHtml(msg.execution_output)}</div></details>`;
         }
 
         el.innerHTML = html;
@@ -592,12 +623,17 @@
       }
 
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      speakLatestIfNew();
     }
 
     // --- Helpers ---
     function setStatus(status) {
       statusDot.className = `status-dot ${status}`;
-      statusText.textContent = status;
+      if (status === "processing" || status === "pending") {
+        statusText.innerHTML = status + ' <span class="spinner"></span>';
+      } else {
+        statusText.textContent = status;
+      }
     }
 
     function showError(msg) {
@@ -691,16 +727,13 @@
 
     let _lastSpokenMsgCount = 0;
 
-    const _origFetchAndRender = fetchAndRenderResults;
-    fetchAndRenderResults = async function() {
-      await _origFetchAndRender();
+    function speakLatestIfNew() {
       const msgs = document.querySelectorAll(".message.assistant .content");
       if (msgs.length > _lastSpokenMsgCount) {
         _lastSpokenMsgCount = msgs.length;
-        const lastMsg = msgs[msgs.length - 1];
-        playTTS(lastMsg.textContent);
+        playTTS(msgs[msgs.length - 1].textContent);
       }
-    };
+    }
   </script>
 </body>
 </html>
