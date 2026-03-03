@@ -47,6 +47,9 @@ def load_dataframe(file_path: str) -> pd.DataFrame:
         raise ValueError(f"Unsupported file type: {ext}")
 
 
+LLM_TIMEOUT_SECONDS = 120
+
+
 def _call_llm(messages: list[dict]) -> str:
     client = _get_client()
     response = client.chat.completions.create(
@@ -54,6 +57,7 @@ def _call_llm(messages: list[dict]) -> str:
         messages=messages,
         max_tokens=4096,
         temperature=0.1,
+        timeout=LLM_TIMEOUT_SECONDS,
     )
     return response.choices[0].message.content or ""
 

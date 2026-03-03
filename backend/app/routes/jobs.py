@@ -42,6 +42,12 @@ async def submit_job(
     session: AsyncSession = Depends(get_session),
 ):
     """Upload a spreadsheet and ask a question. Returns a job_id immediately."""
+    question = question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+    if len(question) > 2000:
+        raise HTTPException(status_code=400, detail="Question too long (max 2000 characters).")
+
     job_id = uuid.uuid4()
 
     try:
@@ -82,6 +88,12 @@ async def submit_followup(
     session: AsyncSession = Depends(get_session),
 ):
     """Submit a follow-up question against an existing job."""
+    question = question.strip()
+    if not question:
+        raise HTTPException(status_code=400, detail="Follow-up question cannot be empty.")
+    if len(question) > 2000:
+        raise HTTPException(status_code=400, detail="Question too long (max 2000 characters).")
+
     job = await session.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")

@@ -8,22 +8,25 @@ from backend.app.models import Message, MessageRole
 
 SYSTEM_PROMPT = """\
 You are a data analysis assistant. You are given a pandas DataFrame `df` (already loaded) \
-and a question about it. Your job is to write Python code to answer the question accurately.
+and a question about it. Write Python code to answer the question accurately.
 
 Rules:
-- Write Python code that operates on `df`, which is already defined
-- Allowed libraries: pandas, numpy, matplotlib, seaborn, scipy
-- To save a chart, call plt.savefig('chart_name.png') — do NOT call plt.show()
-- Always print your final answer using print() so it appears in stdout
-- Never fabricate data or numbers — always compute from df
-- Keep code focused and correct
+- Write Python code that operates on `df`, which is already defined.
+- Allowed libraries: pandas, numpy, matplotlib, seaborn, scipy.
+- To save a chart, call plt.savefig('chart_name.png', dpi=100, bbox_inches='tight'). Do NOT call plt.show().
+- The very last print() in your code MUST output only the final answer value — a number, name, or short phrase. Do NOT print the entire DataFrame or intermediate results.
+- Round numerical answers to 2 decimal places unless the question specifies otherwise.
+- For yes/no or true/false questions, print only "Yes" or "No".
+- Never fabricate data — always compute from df.
+- Handle dirty data: use pd.to_numeric(errors='coerce') when converting columns that may contain non-numeric strings. Use .dropna() or .fillna() as appropriate.
+- If a column looks numeric but has non-number entries (e.g. "Current", "N/A", "-"), coerce them rather than crashing.
 
 Respond with:
-1. A ```python code block containing your analysis code
-2. A brief natural-language answer summarising what you found (after the code block)
-3. End with exactly one line: Final Answer: <value>
+1. A ```python code block containing your analysis code.
+2. A brief natural-language answer (1-2 sentences) after the code block.
+3. End with exactly: Final Answer: <value>
 
-The Final Answer line must be the last line of your response. Use a number or short entity name, no explanation.
+The Final Answer must be the very last line. Use a number or short entity name only, no explanation.
 """
 
 
@@ -35,10 +38,26 @@ def build_schema_summary(df: pd.DataFrame) -> str:
         "Columns and types:",
     ]
     for col, dtype in df.dtypes.items():
-        null_count = df[col].isna().sum()
-        lines.append(f"  - {col!r} ({dtype}){f', {null_count} nulls' if null_count else ''}")
+        null_count = int(df[col].isna().sum())
+        unique_count = int(df[col].nunique())
+        info = f"  - {col!r} ({dtype}, {unique_count} unique"
+        if null_count:
+            info += f", {null_count} nulls"
+        info += ")"
+        # For low-cardinality columns, show the values
+        if unique_count <= 12 and dtype == "object":
+            vals = df[col].dropna().unique()[:12].tolist()
+            info += f" values: {vals}"
+        lines.append(info)
 
     lines += ["", "Sample data (first 5 rows):", df.head(5).to_markdown(index=False)]
+
+    # Numeric summary stats
+    num_cols = df.select_dtypes(include="number")
+    if not num_cols.empty:
+        desc = num_cols.describe().round(2)
+        lines += ["", "Numeric column statistics:", desc.to_markdown()]
+
     return "\n".join(lines)
 
 

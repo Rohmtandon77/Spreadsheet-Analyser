@@ -524,15 +524,21 @@
       followupRow.style.pointerEvents = "none";
       followupRow.style.opacity = "0.5";
 
+      let pollBackoff = 1500;
       while (polling) {
         try {
           const res = await fetch(`${API}/jobs/${currentJobId}/status`);
+          if (!res.ok) throw new Error(`Status ${res.status}`);
           const data = await res.json();
           setStatus(data.status);
+          pollBackoff = 1500;
 
           if (data.status === "completed" || data.status === "failed") {
             polling = false;
             await fetchAndRenderResults();
+            if (data.status === "failed" && data.error) {
+              showError("Analysis failed: " + data.error);
+            }
             followupRow.style.pointerEvents = "";
             followupRow.style.opacity = "";
             followupInput.focus();
@@ -540,13 +546,15 @@
           }
         } catch (e) {
           console.error("Poll error:", e);
+          pollBackoff = Math.min(pollBackoff * 2, 10000);
         }
-        await sleep(1500);
+        await sleep(pollBackoff);
       }
     }
 
     async function fetchAndRenderResults() {
       const res = await fetch(`${API}/jobs/${currentJobId}/results`);
+      if (!res.ok) { showError("Failed to load results."); return; }
       const data = await res.json();
 
       messagesContainer.innerHTML = "";
