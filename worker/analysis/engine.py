@@ -51,12 +51,15 @@ def load_dataframe(file_path: str) -> pd.DataFrame:
 LLM_TIMEOUT_SECONDS = 120
 
 
+LLM_MAX_OUTPUT_TOKENS = 2048
+
+
 def _call_llm(messages: list[dict]) -> str:
     client = _get_client()
     response = client.chat.completions.create(
         model=VLLM_MODEL,
         messages=messages,
-        max_tokens=4096,
+        max_tokens=LLM_MAX_OUTPUT_TOKENS,
         temperature=0.1,
         timeout=LLM_TIMEOUT_SECONDS,
     )

@@ -30,6 +30,11 @@ The Final Answer must be the very last line. Use a number or short entity name o
 """
 
 
+MAX_SCHEMA_COLS_FOR_STATS = 10
+MAX_SAMPLE_ROWS = 3
+MAX_CONVERSATION_TURNS = 6
+
+
 def build_schema_summary(df: pd.DataFrame) -> str:
     """Describe the DataFrame so the model can reason about its structure."""
     lines = [
@@ -44,19 +49,20 @@ def build_schema_summary(df: pd.DataFrame) -> str:
         if null_count:
             info += f", {null_count} nulls"
         info += ")"
-        # For low-cardinality columns, show the values
         if unique_count <= 12 and dtype == "object":
             vals = df[col].dropna().unique()[:12].tolist()
             info += f" values: {vals}"
         lines.append(info)
 
-    lines += ["", "Sample data (first 5 rows):", df.head(5).to_markdown(index=False)]
+    lines += ["", "Sample data:", df.head(MAX_SAMPLE_ROWS).to_markdown(index=False)]
 
-    # Numeric summary stats
     num_cols = df.select_dtypes(include="number")
     if not num_cols.empty:
-        desc = num_cols.describe().round(2)
+        subset = num_cols.iloc[:, :MAX_SCHEMA_COLS_FOR_STATS]
+        desc = subset.describe().round(2)
         lines += ["", "Numeric column statistics:", desc.to_markdown()]
+        if num_cols.shape[1] > MAX_SCHEMA_COLS_FOR_STATS:
+            lines.append(f"  ... and {num_cols.shape[1] - MAX_SCHEMA_COLS_FOR_STATS} more numeric columns")
 
     return "\n".join(lines)
 
@@ -77,11 +83,11 @@ def build_messages(
 
     messages: list[dict] = [{"role": "system", "content": system_content}]
 
-    for msg in conversation:
+    recent = conversation[-MAX_CONVERSATION_TURNS:] if len(conversation) > MAX_CONVERSATION_TURNS else conversation
+    for msg in recent:
         if msg.role == MessageRole.user:
             messages.append({"role": "user", "content": msg.content})
         elif msg.role == MessageRole.assistant:
-            # Include prior code + answer so the model has full context
             parts = []
             if msg.code:
                 parts.append(f"```python\n{msg.code}\n```")
