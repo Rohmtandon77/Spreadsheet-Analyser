@@ -82,6 +82,7 @@ class Message(Base):
         Enum(MessageRole, name="message_role"), nullable=False
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    thinking: Mapped[str | None] = mapped_column(Text, nullable=True)
     code: Mapped[str | None] = mapped_column(Text, nullable=True)
     execution_output: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

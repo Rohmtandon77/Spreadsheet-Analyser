@@ -49,6 +49,7 @@ class MessageOut(BaseModel):
     id: uuid.UUID
     role: MessageRole
     content: str
+    thinking: str | None = None
     code: str | None = None
     execution_output: str | None = None
     created_at: datetime

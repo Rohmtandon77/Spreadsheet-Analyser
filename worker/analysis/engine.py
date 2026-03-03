@@ -32,6 +32,7 @@ class AnalysisResult:
     answer: str
     code: str | None
     execution_output: str
+    thinking: str | None = None
     chart_paths: list[Path] = field(default_factory=list)
     retries_used: int = 0
 
@@ -88,7 +89,7 @@ def run_analysis(
         log.info("LLM call attempt %d/%d", attempt + 1, SANDBOX_MAX_RETRIES + 1)
         raw_response = _call_llm(messages)
 
-        code, answer = parse_response(raw_response)
+        code, answer, thinking = parse_response(raw_response)
 
         if code is None:
             log.warning("No code block found in response, returning text answer only")
@@ -96,6 +97,7 @@ def run_analysis(
                 answer=answer or raw_response,
                 code=None,
                 execution_output="",
+                thinking=thinking,
                 retries_used=attempt,
             )
 
@@ -118,6 +120,7 @@ def run_analysis(
                 answer=final_answer,
                 code=code,
                 execution_output=result.stdout,
+                thinking=thinking,
                 chart_paths=result.chart_paths,
                 retries_used=attempt,
             )
@@ -131,7 +134,7 @@ def run_analysis(
 
     # All retries exhausted
     log.error("Analysis failed after %d attempts", SANDBOX_MAX_RETRIES + 1)
-    _, answer = parse_response(raw_response)
+    _, answer, thinking = parse_response(raw_response)
     return AnalysisResult(
         answer=(
             f"I was unable to compute the answer due to a code execution error.\n\n"

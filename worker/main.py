@@ -81,6 +81,7 @@ async def process_job(job_id: uuid.UUID) -> None:
                 job_id=job_id,
                 role=MessageRole.assistant,
                 content=analysis.answer,
+                thinking=analysis.thinking,
                 code=analysis.code,
                 execution_output=analysis.execution_output,
             )

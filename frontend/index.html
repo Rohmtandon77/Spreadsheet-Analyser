@@ -256,6 +256,29 @@
       border: 1px solid #1e293b;
     }
 
+    /* Final answer -- prominent */
+    .final-answer {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: #e2e8f0;
+      padding: 0.6rem 0;
+      line-height: 1.6;
+    }
+
+    /* Thinking block */
+    .thinking-block {
+      background: #0c1222;
+      color: #94a3b8;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #1e293b;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
     /* Collapsible sections */
     .collapsible {
       margin-top: 0.5rem;
@@ -595,7 +618,15 @@
         el.className = `message ${msg.role}`;
 
         let html = `<div class="role">${msg.role}</div>`;
-        html += `<div class="content">${escapeHtml(msg.content)}</div>`;
+
+        if (msg.role === "assistant") {
+          html += `<div class="final-answer">${escapeHtml(msg.content)}</div>`;
+          if (msg.thinking) {
+            html += `<details class="collapsible"><summary>View thought process</summary><div class="thinking-block">${escapeHtml(msg.thinking)}</div></details>`;
+          }
+        } else {
+          html += `<div class="content">${escapeHtml(msg.content)}</div>`;
+        }
 
         if (msg.code) {
           html += `<details class="collapsible"><summary>View code</summary><div class="code-block">${escapeHtml(msg.code)}</div></details>`;
