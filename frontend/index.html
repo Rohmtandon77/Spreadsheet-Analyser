@@ -9,8 +9,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #0c1a14;
-      color: #e2e8f0;
+      background: #e8f0e8;
+      color: #1e293b;
       min-height: 100vh;
     }
 
@@ -23,8 +23,8 @@
     .sidebar {
       width: 270px;
       min-width: 270px;
-      background: #0a1510;
-      border-right: 1px solid #1a2e22;
+      background: #1e2a3a;
+      border-right: 1px solid #2d3d50;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -45,10 +45,10 @@
       top: 0.75rem;
       left: 0.75rem;
       z-index: 100;
-      background: #111c15;
-      border: 1px solid #1a2e22;
+      background: #1e2a3a;
+      border: 1px solid #3b4a5c;
       border-radius: 6px;
-      color: #64748b;
+      color: #8896a8;
       cursor: pointer;
       width: 32px;
       height: 32px;
@@ -63,7 +63,7 @@
 
     .sidebar-header {
       padding: 1rem 0.75rem 0.65rem;
-      border-bottom: 1px solid #1a2e22;
+      border-bottom: 1px solid #2d3d50;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -74,7 +74,7 @@
       font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #64748b;
+      color: #8896a8;
       font-weight: 600;
       margin-left: 2rem;
     }
@@ -106,10 +106,9 @@
     .sidebar-item {
       padding: 0.55rem 0.7rem;
       cursor: pointer;
-      border-left: 3px solid transparent;
       border-radius: 8px;
-      background: #0e1f16;
-      border: 1px solid #1a2e22;
+      background: #253545;
+      border: 1px solid #3b4a5c;
       transition: all 0.15s;
       display: flex;
       flex-direction: column;
@@ -117,18 +116,19 @@
     }
 
     .sidebar-item:hover {
-      background: rgba(52, 211, 153, 0.06);
-      border-color: #2a4a36;
+      background: #2d3f52;
+      border-color: #4a6178;
     }
 
     .sidebar-item.active {
-      background: rgba(52, 211, 153, 0.1);
-      border-color: #34d399;
+      background: #2d3f52;
+      border-color: #5eead4;
+      box-shadow: 0 0 8px rgba(94, 234, 212, 0.15);
     }
 
     .sidebar-item .item-filename {
       font-size: 0.78rem;
-      color: #e2e8f0;
+      color: #d1dbe8;
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
@@ -137,7 +137,7 @@
 
     .sidebar-item .item-question {
       font-size: 0.7rem;
-      color: #6b8f7b;
+      color: #8896a8;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -148,7 +148,7 @@
       align-items: center;
       gap: 0.4rem;
       font-size: 0.65rem;
-      color: #4a6b58;
+      color: #6b7f96;
       margin-top: 0.1rem;
     }
 
@@ -165,7 +165,7 @@
 
     .sidebar-empty {
       padding: 1.5rem 0.75rem;
-      color: #4a6b58;
+      color: #6b7f96;
       font-size: 0.8rem;
       text-align: center;
     }
@@ -194,22 +194,22 @@
     }
 
     header p {
-      color: #64748b;
+      color: #6b7f96;
       font-size: 0.9rem;
       margin-top: 0.35rem;
     }
 
     /* Upload section */
     .upload-section {
-      background: #0e1f16;
-      border: 1px solid #1a2e22;
+      background: #1e2a3a;
+      border: 1px solid #2d3d50;
       border-radius: 14px;
       padding: 1.5rem;
       margin-bottom: 1.5rem;
     }
 
     .drop-zone {
-      border: 2px dashed #2a4a36;
+      border: 2px dashed #3b4a5c;
       border-radius: 10px;
       padding: 2.25rem;
       text-align: center;
@@ -219,8 +219,8 @@
     }
 
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: #34d399;
-      background: rgba(52, 211, 153, 0.06);
+      border-color: #5eead4;
+      background: rgba(94, 234, 212, 0.06);
     }
 
     .drop-zone .icon {
@@ -229,12 +229,12 @@
     }
 
     .drop-zone p {
-      color: #64748b;
+      color: #8896a8;
       font-size: 0.9rem;
     }
 
     .drop-zone .file-name {
-      color: #e2e8f0;
+      color: #d1dbe8;
       font-weight: 600;
       font-size: 0.95rem;
     }
@@ -244,7 +244,7 @@
       align-items: center;
       gap: 0.75rem;
       padding: 0.65rem 1rem;
-      background: #152a1e;
+      background: #253545;
       border-radius: 8px;
       margin-bottom: 1rem;
       font-size: 0.82rem;
@@ -255,7 +255,7 @@
       margin-left: auto;
       background: none;
       border: none;
-      color: #475569;
+      color: #6b7f96;
       cursor: pointer;
       font-size: 1.15rem;
       line-height: 1;
@@ -271,17 +271,17 @@
     .question-row input {
       flex: 1;
       padding: 0.7rem 0.9rem;
-      background: #152a1e;
-      border: 1px solid #2a4a36;
+      background: #253545;
+      border: 1px solid #3b4a5c;
       border-radius: 8px;
       font-size: 0.9rem;
-      color: #e2e8f0;
+      color: #d1dbe8;
       outline: none;
       transition: border-color 0.2s;
     }
 
-    .question-row input::placeholder { color: #475569; }
-    .question-row input:focus { border-color: #34d399; }
+    .question-row input::placeholder { color: #6b7f96; }
+    .question-row input:focus { border-color: #5eead4; }
 
     .btn {
       padding: 0.7rem 1.35rem;
@@ -304,16 +304,16 @@
     }
 
     .btn-primary:disabled {
-      background: #152a1e;
-      color: #4a6b58;
+      background: #253545;
+      color: #6b7f96;
       cursor: not-allowed;
       box-shadow: none;
     }
 
     /* Chat / conversation */
     .chat-section {
-      background: #0e1f16;
-      border: 1px solid #1a2e22;
+      background: #1e2a3a;
+      border: 1px solid #2d3d50;
       border-radius: 14px;
       overflow: hidden;
       margin-bottom: 1.5rem;
@@ -321,11 +321,11 @@
 
     .chat-header {
       padding: 0.75rem 1.25rem;
-      border-bottom: 1px solid #1a2e22;
+      border-bottom: 1px solid #2d3d50;
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      background: #0a1510;
+      background: #172030;
     }
 
     .chat-header .status-dot {
@@ -347,7 +347,7 @@
 
     .chat-header .status-text {
       font-size: 0.75rem;
-      color: #64748b;
+      color: #8896a8;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -366,7 +366,7 @@
 
     .messages::-webkit-scrollbar { width: 6px; }
     .messages::-webkit-scrollbar-track { background: transparent; }
-    .messages::-webkit-scrollbar-thumb { background: #2a4a36; border-radius: 3px; }
+    .messages::-webkit-scrollbar-thumb { background: #3b4a5c; border-radius: 3px; }
 
     .message {
       margin-bottom: 1.5rem;
@@ -380,26 +380,26 @@
       margin-bottom: 0.35rem;
     }
 
-    .message.user .role { color: #5eead4; }
+    .message.user .role { color: #0ea5e9; }
     .message.assistant .role { color: #34d399; }
 
     .message.user .content {
-      color: #94a3b8;
+      color: #8896a8;
       font-size: 0.9rem;
     }
 
     .message.assistant .content {
       font-size: 0.9rem;
       line-height: 1.65;
-      color: #e2e8f0;
+      color: #d1dbe8;
     }
 
     .message .code-block {
-      background: #081210;
+      background: #151e2c;
       color: #86efac;
       padding: 0.85rem 1rem;
       border-radius: 8px;
-      border: 1px solid #1a2e22;
+      border: 1px solid #2d3d50;
       font-family: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
       font-size: 0.78rem;
       overflow-x: auto;
@@ -412,25 +412,25 @@
       max-width: 100%;
       border-radius: 10px;
       margin-top: 0.85rem;
-      border: 1px solid #1a2e22;
+      border: 1px solid #2d3d50;
     }
 
     /* Final answer -- prominent */
     .final-answer {
       font-size: 1.05rem;
       font-weight: 500;
-      color: #e2e8f0;
+      color: #d1dbe8;
       padding: 0.6rem 0;
       line-height: 1.6;
     }
 
     /* Thinking block */
     .thinking-block {
-      background: #081210;
-      color: #94a3b8;
+      background: #151e2c;
+      color: #8896a8;
       padding: 0.75rem 1rem;
       border-radius: 6px;
-      border: 1px solid #1a2e22;
+      border: 1px solid #2d3d50;
       font-size: 0.82rem;
       line-height: 1.55;
       white-space: pre-wrap;
@@ -445,7 +445,7 @@
 
     .collapsible summary {
       cursor: pointer;
-      color: #64748b;
+      color: #6b7f96;
       font-size: 0.78rem;
       padding: 0.3rem 0;
       user-select: none;
@@ -461,8 +461,8 @@
       display: inline-block;
       width: 14px;
       height: 14px;
-      border: 2px solid #2a4a36;
-      border-top-color: #34d399;
+      border: 2px solid #3b4a5c;
+      border-top-color: #5eead4;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
       margin-left: 0.4rem;
@@ -470,11 +470,11 @@
     }
 
     .message .stdout-block {
-      background: #081210;
+      background: #151e2c;
       color: #5eead4;
       padding: 0.55rem 0.85rem;
       border-radius: 6px;
-      border: 1px solid #1a2e22;
+      border: 1px solid #2d3d50;
       font-family: monospace;
       font-size: 0.78rem;
       margin-top: 0.5rem;
@@ -486,32 +486,32 @@
       display: flex;
       gap: 0.5rem;
       padding: 0.85rem 1.25rem;
-      border-top: 1px solid #1a2e22;
-      background: #0a1510;
+      border-top: 1px solid #2d3d50;
+      background: #172030;
     }
 
     .followup-row input {
       flex: 1;
       padding: 0.65rem 0.9rem;
-      background: #152a1e;
-      border: 1px solid #2a4a36;
+      background: #253545;
+      border: 1px solid #3b4a5c;
       border-radius: 8px;
       font-size: 0.9rem;
-      color: #e2e8f0;
+      color: #d1dbe8;
       outline: none;
     }
 
-    .followup-row input::placeholder { color: #4a6b58; }
-    .followup-row input:focus { border-color: #34d399; }
+    .followup-row input::placeholder { color: #6b7f96; }
+    .followup-row input:focus { border-color: #5eead4; }
 
     /* Mic button */
     .btn-mic {
       width: 40px;
       height: 40px;
-      border: 1px solid #2a4a36;
+      border: 1px solid #3b4a5c;
       border-radius: 8px;
-      background: #152a1e;
-      color: #6b8f7b;
+      background: #253545;
+      color: #8896a8;
       font-size: 1.1rem;
       cursor: pointer;
       display: flex;
@@ -521,7 +521,7 @@
       flex-shrink: 0;
     }
 
-    .btn-mic:hover { border-color: #34d399; color: #34d399; }
+    .btn-mic:hover { border-color: #5eead4; color: #5eead4; }
 
     .btn-mic.recording {
       background: rgba(239, 68, 68, 0.15);
@@ -544,8 +544,8 @@
     /* Error */
     .error-banner {
       background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.25);
-      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #dc2626;
       padding: 0.75rem 1rem;
       border-radius: 8px;
       font-size: 0.85rem;
@@ -553,28 +553,35 @@
     }
 
     /* TTS toggle */
-    .tts-toggle {
+    .conv-toggle {
       position: absolute;
       top: 0;
       right: 0;
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 20px;
+      border: 1px solid #3b4a5c;
+      background: #1e2a3a;
+      color: #6b7f96;
+      font-size: 0.78rem;
+      font-weight: 500;
       cursor: pointer;
+      transition: all 0.3s;
       user-select: none;
     }
 
-    .tts-toggle input[type="checkbox"] {
-      accent-color: #34d399;
-      width: 15px;
-      height: 15px;
-      cursor: pointer;
+    .conv-toggle:hover {
+      border-color: #4a8f6a;
+      color: #8aa89c;
     }
 
-    .tts-toggle-label {
-      font-size: 0.78rem;
-      color: #64748b;
-      transition: color 0.2s;
+    .conv-toggle.active {
+      background: rgba(52, 211, 153, 0.12);
+      border-color: #34d399;
+      color: #34d399;
+      box-shadow: 0 0 14px rgba(52, 211, 153, 0.25), 0 0 4px rgba(52, 211, 153, 0.15);
     }
 
     .mic-svg {
@@ -586,15 +593,12 @@
       vertical-align: -2px;
     }
 
-    .tts-toggle:hover .tts-toggle-label { color: #34d399; }
-    .tts-toggle input:checked ~ .tts-toggle-label { color: #34d399; }
-
     /* Speak / mic button on answers */
     .btn-speak {
       background: none;
-      border: 1px solid #2a4a36;
+      border: 1px solid #3b4a5c;
       border-radius: 6px;
-      color: #6b8f7b;
+      color: #8896a8;
       cursor: pointer;
       padding: 0.25rem 0.4rem;
       margin-left: 0.5rem;
@@ -604,7 +608,7 @@
       justify-content: center;
     }
 
-    .btn-speak:hover { color: #34d399; border-color: #34d399; }
+    .btn-speak:hover { color: #5eead4; border-color: #5eead4; }
     .btn-speak.speaking { color: #34d399; border-color: #34d399; }
     .btn-speak.recording { color: #f87171; border-color: #f87171; animation: pulse 0.8s infinite; }
 
@@ -633,10 +637,10 @@
     <header>
       <h1>Spreadsheet Analysis</h1>
       <p>Upload a CSV or Excel file and ask questions about your data.</p>
-      <label class="tts-toggle" id="convModeLabel" title="Voice conversation: speak questions, hear answers">
-        <input type="checkbox" id="ttsToggle">
-        <span class="tts-toggle-label"><svg class="mic-svg" viewBox="0 0 24 24" width="14" height="14"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Conversation mode</span>
-      </label>
+      <button class="conv-toggle" id="convToggle" title="Toggle conversation mode">
+        <svg class="mic-svg" viewBox="0 0 24 24" width="14" height="14"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        Conversation mode
+      </button>
     </header>
 
     <div id="errorBanner" class="error-banner hidden"></div>
@@ -989,7 +993,7 @@
               targetInput.value = data.text;
               targetInput.dispatchEvent(new Event("input"));
 
-              if (ttsToggle.checked && autoSubmitFn) {
+              if (convModeOn && autoSubmitFn) {
                 autoSubmitFn();
               } else {
                 targetInput.focus();
@@ -1013,7 +1017,12 @@
     setupMic(micBtn, questionInput, () => submitBtn.click());
     setupMic(micFollowupBtn, followupInput, () => submitFollowup());
 
-    const ttsToggle = document.getElementById("ttsToggle");
+    const convToggle = document.getElementById("convToggle");
+    let convModeOn = false;
+    convToggle.addEventListener("click", () => {
+      convModeOn = !convModeOn;
+      convToggle.classList.toggle("active", convModeOn);
+    });
 
     async function playTTS(text, speakBtn) {
       try {
@@ -1035,7 +1044,7 @@
     let _lastSpokenMsgCount = 0;
 
     function speakLatestIfNew() {
-      if (!ttsToggle.checked) return;
+      if (!convModeOn) return;
       const answers = document.querySelectorAll(".message.assistant .final-answer");
       if (answers.length > _lastSpokenMsgCount) {
         _lastSpokenMsgCount = answers.length;
@@ -1052,7 +1061,7 @@
       const btn = e.target.closest(".btn-speak");
       if (!btn) return;
 
-      if (ttsToggle.checked) {
+      if (convModeOn) {
         // Conversation mode ON: mic records a follow-up question
         if (_inlineMicRecorder && _inlineMicRecorder.state === "recording") {
           _inlineMicRecorder.stop();
