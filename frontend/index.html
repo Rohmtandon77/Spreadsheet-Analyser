@@ -170,31 +170,71 @@
       text-align: center;
     }
 
+    .main-col {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
     .container {
       max-width: 880px;
       margin: 0 auto;
-      padding: 2rem 1.5rem;
+      padding: 1.5rem 1.5rem 2rem;
+      width: 100%;
+    }
+
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      background: #f0ece4;
+      border-bottom: 1px solid #ddd6cc;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .top-bar-text {
       flex: 1;
-      min-width: 0;
     }
 
-    header {
-      margin-bottom: 2rem;
-      text-align: center;
-      position: relative;
-    }
-
-    header h1 {
-      font-size: 1.75rem;
+    .top-bar h1 {
+      font-size: 1.3rem;
       font-weight: 800;
       color: #3a3f47;
       -webkit-text-fill-color: #3a3f47;
+      margin: 0;
+      line-height: 1.2;
     }
 
-    header p {
+    .top-bar p {
       color: #6b7f96;
-      font-size: 0.9rem;
-      margin-top: 0.35rem;
+      font-size: 0.78rem;
+      margin: 0.1rem 0 0;
+    }
+
+    /* Show more button in sidebar */
+    .sidebar-show-more {
+      display: block;
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+      background: none;
+      border: 1px dashed #3b4a5c;
+      border-radius: 8px;
+      color: #8896a8;
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .sidebar-show-more:hover {
+      border-color: #5eead4;
+      color: #5eead4;
     }
 
     /* Upload section */
@@ -552,9 +592,7 @@
 
     /* TTS toggle */
     .conv-toggle {
-      position: absolute;
-      top: 0;
-      right: 0;
+      flex-shrink: 0;
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
@@ -631,15 +669,18 @@
       <div class="sidebar-empty">No jobs yet</div>
     </div>
   </aside>
-  <div class="container">
-    <header>
-      <h1>SpreadX</h1>
-      <p>Upload a CSV or Excel file and ask questions about your data.</p>
+  <div class="main-col">
+    <div class="top-bar">
+      <div class="top-bar-text">
+        <h1>SpreadX</h1>
+        <p>Upload a CSV or Excel file and ask questions about your data.</p>
+      </div>
       <button class="conv-toggle" id="convToggle" title="Toggle conversation mode">
         <svg class="mic-svg" viewBox="0 0 24 24" width="14" height="14"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
         Conversation mode
       </button>
-    </header>
+    </div>
+    <div class="container">
 
     <div id="errorBanner" class="error-banner hidden"></div>
 
@@ -677,7 +718,8 @@
         <button class="btn btn-primary" id="followupBtn">Send</button>
       </div>
     </div>
-  </div>
+  </div><!-- /container -->
+  </div><!-- /main-col -->
   </div><!-- /app-layout -->
 
   <script>
@@ -1101,35 +1143,62 @@
     });
 
     // --- Job History Sidebar ---
+    const SIDEBAR_INITIAL = 5;
+    let _sidebarExpanded = false;
+    let _sidebarJobs = [];
+
+    function renderSidebarItem(job) {
+      const item = document.createElement("div");
+      item.className = "sidebar-item" + (job.id === currentJobId ? " active" : "");
+      item.dataset.jobId = job.id;
+      const time = new Date(job.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      const question = job.first_question ? escapeHtml(job.first_question.substring(0, 60)) : "";
+      item.innerHTML = `
+        <div class="item-filename">${escapeHtml(job.original_filename)}</div>
+        ${question ? `<div class="item-question">${question}</div>` : ""}
+        <div class="item-meta">
+          <span class="item-status ${job.status}"></span>
+          <span>${job.status}</span>
+          <span>&middot;</span>
+          <span>${time}</span>
+        </div>
+      `;
+      item.addEventListener("click", () => loadJob(job.id, job.original_filename));
+      return item;
+    }
+
+    function renderSidebar() {
+      if (_sidebarJobs.length === 0) {
+        sidebarList.innerHTML = '<div class="sidebar-empty">No jobs yet</div>';
+        return;
+      }
+      sidebarList.innerHTML = "";
+      const visibleJobs = _sidebarExpanded ? _sidebarJobs : _sidebarJobs.slice(0, SIDEBAR_INITIAL);
+      for (const job of visibleJobs) {
+        sidebarList.appendChild(renderSidebarItem(job));
+      }
+      const remaining = _sidebarJobs.length - SIDEBAR_INITIAL;
+      if (remaining > 0 && !_sidebarExpanded) {
+        const btn = document.createElement("button");
+        btn.className = "sidebar-show-more";
+        btn.textContent = `Show ${remaining} more`;
+        btn.addEventListener("click", () => { _sidebarExpanded = true; renderSidebar(); });
+        sidebarList.appendChild(btn);
+      } else if (_sidebarExpanded && _sidebarJobs.length > SIDEBAR_INITIAL) {
+        const btn = document.createElement("button");
+        btn.className = "sidebar-show-more";
+        btn.textContent = "Show less";
+        btn.addEventListener("click", () => { _sidebarExpanded = false; renderSidebar(); });
+        sidebarList.appendChild(btn);
+      }
+    }
+
     async function loadSidebar() {
       try {
         const res = await fetch(`${API}/jobs`);
         if (!res.ok) return;
-        const jobs = await res.json();
-        if (jobs.length === 0) {
-          sidebarList.innerHTML = '<div class="sidebar-empty">No jobs yet</div>';
-          return;
-        }
-        sidebarList.innerHTML = "";
-        for (const job of jobs) {
-          const item = document.createElement("div");
-          item.className = "sidebar-item" + (job.id === currentJobId ? " active" : "");
-          item.dataset.jobId = job.id;
-          const time = new Date(job.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-          const question = job.first_question ? escapeHtml(job.first_question.substring(0, 60)) : "";
-          item.innerHTML = `
-            <div class="item-filename">${escapeHtml(job.original_filename)}</div>
-            ${question ? `<div class="item-question">${question}</div>` : ""}
-            <div class="item-meta">
-              <span class="item-status ${job.status}"></span>
-              <span>${job.status}</span>
-              <span>&middot;</span>
-              <span>${time}</span>
-            </div>
-          `;
-          item.addEventListener("click", () => loadJob(job.id, job.original_filename));
-          sidebarList.appendChild(item);
-        }
+        _sidebarJobs = await res.json();
+        renderSidebar();
       } catch (e) {
         console.warn("Sidebar load failed:", e);
       }
