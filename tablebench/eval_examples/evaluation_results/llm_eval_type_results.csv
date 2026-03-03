@@ -1,0 +1,3 @@
+model_name	instruction_type	NumericalReasoning	Overall	FactChecking	DataAnalysis	Visualization
+DeepSeek-R1-Distill-Qwen-32B	DP	100.0	100.0			
+o3-mini-2025-01-31	DP	87.5	58.3	83.33	26.06	33.33

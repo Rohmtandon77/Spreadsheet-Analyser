@@ -21,6 +21,9 @@ Rules:
 Respond with:
 1. A ```python code block containing your analysis code
 2. A brief natural-language answer summarising what you found (after the code block)
+3. End with exactly one line: Final Answer: <value>
+
+The Final Answer line must be the last line of your response. Use a number or short entity name, no explanation.
 """
 
 

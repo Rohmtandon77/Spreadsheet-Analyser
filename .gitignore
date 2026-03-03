@@ -29,3 +29,7 @@ Thumbs.db
 
 # User data files (may contain PII)
 Job Applications.csv
+
+# TableBench large generated outputs (regenerate with scripts/run_tablebench.py)
+tablebench/eval_examples/inference_results/*Ours*
+tablebench/eval_examples/parsed_results/*Ours*
