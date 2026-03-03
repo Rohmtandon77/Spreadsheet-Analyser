@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Shortcut: ./sa ask -f data.csv -q "What is the total revenue?"
+DIR="$(cd "$(dirname "$0")" && pwd)"
+exec "$DIR/.venv/bin/python" -m cli.main "$@"
