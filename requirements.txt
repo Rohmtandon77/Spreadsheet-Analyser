@@ -20,6 +20,10 @@ matplotlib>=3.9.0
 seaborn>=0.13.0
 scipy>=1.14.0
 
+# Voice (STT + TTS)
+faster-whisper>=1.0.0
+edge-tts>=7.0.0
+
 # CLI
 click>=8.1.0
 

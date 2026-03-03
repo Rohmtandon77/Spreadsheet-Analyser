@@ -291,6 +291,43 @@
     .followup-row input::placeholder { color: #475569; }
     .followup-row input:focus { border-color: #818cf8; }
 
+    /* Mic button */
+    .btn-mic {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #1e293b;
+      color: #64748b;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-mic:hover { border-color: #818cf8; color: #818cf8; }
+
+    .btn-mic.recording {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #f87171;
+      color: #f87171;
+      animation: pulse 0.8s infinite;
+    }
+
+    /* Audio player inline */
+    .audio-player {
+      margin-top: 0.5rem;
+    }
+
+    .audio-player audio {
+      height: 32px;
+      width: 100%;
+      border-radius: 6px;
+    }
+
     /* Error */
     .error-banner {
       background: rgba(239, 68, 68, 0.1);
@@ -329,6 +366,7 @@
 
       <div class="question-row">
         <input type="text" id="questionInput" placeholder="Ask a question about your data ..." />
+        <button class="btn-mic" id="micBtn" title="Record voice question">&#127908;</button>
         <button class="btn btn-primary" id="submitBtn" disabled>Analyze</button>
       </div>
     </div>
@@ -343,6 +381,7 @@
       <div class="messages" id="messagesContainer"></div>
       <div class="followup-row" id="followupRow">
         <input type="text" id="followupInput" placeholder="Ask a follow-up question ..." />
+        <button class="btn-mic" id="micFollowupBtn" title="Record voice follow-up">&#127908;</button>
         <button class="btn btn-primary" id="followupBtn">Send</button>
       </div>
     </div>
@@ -571,6 +610,89 @@
     function sleep(ms) {
       return new Promise(r => setTimeout(r, ms));
     }
+
+    // --- Voice: STT + TTS ---
+    const micBtn = document.getElementById("micBtn");
+    const micFollowupBtn = document.getElementById("micFollowupBtn");
+
+    function setupMic(btn, targetInput) {
+      let mediaRecorder = null;
+      let chunks = [];
+
+      btn.addEventListener("click", async () => {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+          return;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          chunks = [];
+
+          mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            btn.classList.remove("recording");
+            btn.innerHTML = "&#127908;";
+
+            const blob = new Blob(chunks, { type: "audio/webm" });
+            const form = new FormData();
+            form.append("audio", blob, "recording.webm");
+
+            try {
+              btn.innerHTML = "...";
+              const res = await fetch(`${API}/voice/stt`, { method: "POST", body: form });
+              if (!res.ok) throw new Error("STT failed");
+              const data = await res.json();
+              targetInput.value = data.text;
+              targetInput.dispatchEvent(new Event("input"));
+              targetInput.focus();
+            } catch (e) {
+              showError("Voice transcription failed: " + e.message);
+            } finally {
+              btn.innerHTML = "&#127908;";
+            }
+          };
+
+          mediaRecorder.start();
+          btn.classList.add("recording");
+          btn.innerHTML = "&#9209;";
+        } catch (e) {
+          showError("Microphone access denied.");
+        }
+      });
+    }
+
+    setupMic(micBtn, questionInput);
+    setupMic(micFollowupBtn, followupInput);
+
+    async function playTTS(text) {
+      try {
+        const truncated = text.substring(0, 500);
+        const res = await fetch(`${API}/voice/tts?text=${encodeURIComponent(truncated)}`, { method: "POST" });
+        if (!res.ok) return;
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
+      } catch (e) {
+        console.warn("TTS playback failed:", e);
+      }
+    }
+
+    let _lastSpokenMsgCount = 0;
+
+    const _origFetchAndRender = fetchAndRenderResults;
+    fetchAndRenderResults = async function() {
+      await _origFetchAndRender();
+      const msgs = document.querySelectorAll(".message.assistant .content");
+      if (msgs.length > _lastSpokenMsgCount) {
+        _lastSpokenMsgCount = msgs.length;
+        const lastMsg = msgs[msgs.length - 1];
+        playTTS(lastMsg.textContent);
+      }
+    };
   </script>
 </body>
 </html>

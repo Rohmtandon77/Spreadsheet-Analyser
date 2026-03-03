@@ -11,6 +11,7 @@ from backend.app.database import engine
 from backend.app.models import Base
 from backend.app.queue import close_redis
 from backend.app.routes.jobs import router as jobs_router
+from backend.app.routes.voice import router as voice_router
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 app.include_router(jobs_router)
+app.include_router(voice_router)
 
 # Serve job artifacts (charts, outputs) at /files/jobs/{job_id}/...
 app.mount("/files", StaticFiles(directory=str(DATA_DIR)), name="files")
