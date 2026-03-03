@@ -1,11 +1,15 @@
-"""Voice endpoints: Speech-to-Text and Text-to-Speech."""
+"""Voice endpoints: Speech-to-Text and Text-to-Speech.
+
+STT: faster-whisper (local, GPU 4)
+TTS: Piper (local, no external APIs)
+"""
 
 import asyncio
 import io
 import tempfile
+import wave
 from pathlib import Path
 
-import edge_tts
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 
@@ -13,11 +17,13 @@ router = APIRouter(prefix="/voice", tags=["voice"])
 
 _whisper_model = None
 _whisper_lock = asyncio.Lock()
+_piper_voice = None
+_piper_lock = asyncio.Lock()
 
 WHISPER_MODEL_SIZE = "large-v3"
 WHISPER_DEVICE = "cuda"
 WHISPER_DEVICE_INDEX = 4
-TTS_VOICE = "en-US-AriaNeural"
+PIPER_VOICE_ID = "en_US-ryan-high"
 
 
 async def _get_whisper():
@@ -36,6 +42,26 @@ async def _get_whisper():
                     ),
                 )
     return _whisper_model
+
+
+async def _get_piper():
+    global _piper_voice
+    if _piper_voice is None:
+        async with _piper_lock:
+            if _piper_voice is None:
+                from huggingface_hub import hf_hub_download
+
+                def _load():
+                    onnx = hf_hub_download(
+                        repo_id="rhasspy/piper-voices",
+                        filename=f"en/en_US/ryan/high/{PIPER_VOICE_ID}.onnx",
+                    )
+                    from piper import PiperVoice
+
+                    return PiperVoice.load(Path(onnx), use_cuda=False)
+
+                _piper_voice = await asyncio.get_event_loop().run_in_executor(None, _load)
+    return _piper_voice
 
 
 @router.post("/stt")
@@ -63,19 +89,28 @@ async def speech_to_text(audio: UploadFile = File(...)):
 @router.post("/tts")
 async def text_to_speech(
     text: str = Query(..., description="Text to synthesize"),
-    voice: str = Query(default=TTS_VOICE, description="Edge TTS voice name"),
 ):
-    """Convert text to speech audio (MP3)."""
+    """Convert text to speech audio (WAV). Local Piper TTS, no external APIs."""
     try:
-        communicate = edge_tts.Communicate(text, voice)
-        buf = io.BytesIO()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                buf.write(chunk["data"])
-        buf.seek(0)
+        voice = await _get_piper()
+
+        def _synth():
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                path = tmp.name
+            try:
+                with wave.open(path, "wb") as wav:
+                    voice.synthesize_wav(text, wav)
+                with open(path, "rb") as f:
+                    return f.read()
+            finally:
+                Path(path).unlink(missing_ok=True)
+
+        wav_data = await asyncio.get_event_loop().run_in_executor(None, _synth)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"TTS failed: {e}")
 
-    return StreamingResponse(buf, media_type="audio/mpeg", headers={
-        "Content-Disposition": "inline; filename=speech.mp3"
-    })
+    return StreamingResponse(
+        io.BytesIO(wav_data),
+        media_type="audio/wav",
+        headers={"Content-Disposition": "inline; filename=speech.wav"},
+    )
