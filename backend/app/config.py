@@ -26,6 +26,12 @@ UPLOAD_MAX_SIZE_MB: int = int(os.getenv("UPLOAD_MAX_SIZE_MB", "50"))
 SANDBOX_TIMEOUT_SECONDS: int = int(os.getenv("SANDBOX_TIMEOUT_SECONDS", "30"))
 SANDBOX_MAX_RETRIES: int = int(os.getenv("SANDBOX_MAX_RETRIES", "2"))
 
+# Voice
+WHISPER_MODEL_SIZE: str = os.getenv("WHISPER_MODEL_SIZE", "large-v3")
+WHISPER_DEVICE: str = os.getenv("WHISPER_DEVICE", "cuda")
+WHISPER_DEVICE_INDEX: int = int(os.getenv("WHISPER_DEVICE_INDEX", "4"))
+PIPER_VOICE_ID: str = os.getenv("PIPER_VOICE_ID", "en_US-ryan-high")
+
 
 def database_url() -> str:
     return (

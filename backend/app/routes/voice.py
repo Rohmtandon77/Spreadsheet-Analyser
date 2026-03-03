@@ -15,15 +15,17 @@ from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/voice", tags=["voice"])
 
+from backend.app.config import (
+    PIPER_VOICE_ID,
+    WHISPER_DEVICE,
+    WHISPER_DEVICE_INDEX,
+    WHISPER_MODEL_SIZE,
+)
+
 _whisper_model = None
 _whisper_lock = asyncio.Lock()
 _piper_voice = None
 _piper_lock = asyncio.Lock()
-
-WHISPER_MODEL_SIZE = "large-v3"
-WHISPER_DEVICE = "cuda"
-WHISPER_DEVICE_INDEX = 4
-PIPER_VOICE_ID = "en_US-ryan-high"
 
 
 async def _get_whisper():

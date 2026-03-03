@@ -5,14 +5,15 @@ import logging
 import mimetypes
 import signal
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from backend.app.database import async_session, engine
 from backend.app.models import Artifact, ArtifactType, Base, Job, JobStatus, Message, MessageRole
-from backend.app.queue import close_redis, dequeue_job
+from backend.app.queue import close_redis, dequeue_job, enqueue_job
 from backend.app.storage import job_dir
 from worker.analysis.engine import run_analysis
 
@@ -21,6 +22,8 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(name)s  %(message)s",
 )
 log = logging.getLogger("worker")
+
+STUCK_JOB_THRESHOLD_MINUTES = 5
 
 _shutdown = False
 
@@ -112,11 +115,36 @@ async def process_job(job_id: uuid.UUID) -> None:
             await session.commit()
 
 
+async def recover_stuck_jobs() -> None:
+    """Reset jobs stuck in 'processing' for too long and re-enqueue them."""
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=STUCK_JOB_THRESHOLD_MINUTES)
+    async with async_session() as session:
+        stmt = (
+            select(Job)
+            .where(Job.status == JobStatus.processing)
+            .where(Job.updated_at < cutoff)
+        )
+        result = await session.execute(stmt)
+        stuck_jobs = result.scalars().all()
+        for job in stuck_jobs:
+            log.warning("Recovering stuck job %s (stuck since %s)", job.id, job.updated_at)
+            job.status = JobStatus.pending
+            job.error = None
+        await session.commit()
+
+    for job in stuck_jobs:
+        await enqueue_job(job.id)
+
+    if stuck_jobs:
+        log.info("Recovered %d stuck job(s)", len(stuck_jobs))
+
+
 async def run() -> None:
     """Main worker loop."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+    await recover_stuck_jobs()
     log.info("Worker started, polling for jobs ...")
 
     while not _shutdown:
