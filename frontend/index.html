@@ -480,9 +480,9 @@
         <span class="status-dot" id="statusDot"></span>
         <span class="file-label" id="chatFileName"></span>
         <span class="status-text" id="statusText"></span>
-        <label class="tts-toggle" title="Auto-read answers aloud">
+        <label class="tts-toggle" title="Voice conversation: speak questions, hear answers">
           <input type="checkbox" id="ttsToggle">
-          <span class="tts-toggle-label">&#128264; Auto-speak</span>
+          <span class="tts-toggle-label">&#127908; Conversation mode</span>
         </label>
       </div>
       <div class="messages" id="messagesContainer"></div>
@@ -675,7 +675,7 @@
         if (msg.role === "assistant") {
           const answerText = escapeHtml(msg.content);
           const safeAttr = msg.content.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
-          html += `<div class="answer-header"><div class="final-answer">${answerText}</div><button class="btn-speak" data-text="${safeAttr}" title="Read aloud">&#128264;</button></div>`;
+          html += `<div class="answer-header"><div class="final-answer">${answerText}</div><button class="btn-speak" data-text="${safeAttr}" title="Read aloud / Speak follow-up">&#127908;</button></div>`;
           if (msg.thinking) {
             html += `<details class="collapsible"><summary>View thought process</summary><div class="thinking-block">${escapeHtml(msg.thinking)}</div></details>`;
           }
@@ -745,7 +745,7 @@
     const micBtn = document.getElementById("micBtn");
     const micFollowupBtn = document.getElementById("micFollowupBtn");
 
-    function setupMic(btn, targetInput) {
+    function setupMic(btn, targetInput, autoSubmitFn) {
       let mediaRecorder = null;
       let chunks = [];
 
@@ -777,7 +777,12 @@
               const data = await res.json();
               targetInput.value = data.text;
               targetInput.dispatchEvent(new Event("input"));
-              targetInput.focus();
+
+              if (ttsToggle.checked && autoSubmitFn) {
+                autoSubmitFn();
+              } else {
+                targetInput.focus();
+              }
             } catch (e) {
               showError("Voice transcription failed: " + e.message);
             } finally {
@@ -794,8 +799,8 @@
       });
     }
 
-    setupMic(micBtn, questionInput);
-    setupMic(micFollowupBtn, followupInput);
+    setupMic(micBtn, questionInput, () => submitBtn.click());
+    setupMic(micFollowupBtn, followupInput, () => submitFollowup());
 
     const ttsToggle = document.getElementById("ttsToggle");
 
@@ -808,11 +813,11 @@
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
-        audio.onended = () => { if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#128264;"; } };
+        audio.onended = () => { if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#127908;"; } };
         audio.play();
       } catch (e) {
         console.warn("TTS playback failed:", e);
-        if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#128264;"; }
+        if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#127908;"; }
       }
     }
 
@@ -829,11 +834,52 @@
       }
     }
 
+    let _inlineMicRecorder = null;
+    let _inlineMicChunks = [];
+
     document.addEventListener("click", (e) => {
       const btn = e.target.closest(".btn-speak");
       if (!btn) return;
-      const text = btn.dataset.text;
-      if (text) playTTS(text, btn);
+
+      if (ttsToggle.checked) {
+        // Conversation mode ON: mic records a follow-up question
+        if (_inlineMicRecorder && _inlineMicRecorder.state === "recording") {
+          _inlineMicRecorder.stop();
+          return;
+        }
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+          _inlineMicRecorder = new MediaRecorder(stream);
+          _inlineMicChunks = [];
+          _inlineMicRecorder.ondataavailable = (ev) => _inlineMicChunks.push(ev.data);
+          _inlineMicRecorder.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            btn.classList.remove("recording");
+            btn.innerHTML = "&#127908;";
+            const blob = new Blob(_inlineMicChunks, { type: "audio/webm" });
+            const form = new FormData();
+            form.append("audio", blob, "recording.webm");
+            try {
+              btn.innerHTML = "...";
+              const res = await fetch(`${API}/voice/stt`, { method: "POST", body: form });
+              if (!res.ok) throw new Error("STT failed");
+              const data = await res.json();
+              followupInput.value = data.text;
+              submitFollowup();
+            } catch (err) {
+              showError("Voice transcription failed: " + err.message);
+            } finally {
+              btn.innerHTML = "&#127908;";
+            }
+          };
+          _inlineMicRecorder.start();
+          btn.classList.add("recording");
+          btn.innerHTML = "&#9209;";
+        }).catch(() => showError("Microphone access denied."));
+      } else {
+        // Conversation mode OFF: read this answer aloud
+        const text = btn.dataset.text;
+        if (text) playTTS(text, btn);
+      }
     });
   </script>
 </body>
