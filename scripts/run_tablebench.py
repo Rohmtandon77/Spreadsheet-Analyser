@@ -23,6 +23,39 @@ from backend.app.models import Message, MessageRole
 from worker.analysis.engine import run_analysis
 
 
+QTYPE_HINTS = {
+    "ImpactAnalysis": (
+        '\nAnswer ONLY with one of: "Positive impact", "Negative impact", or "No clear impact". '
+        "Nothing else."
+    ),
+    "CorrelationAnalysis": (
+        "\nAnswer with the correlation type and coefficient, e.g.: "
+        '"Positive correlation, 0.85" or "No correlation, 0.12". '
+        "Compute the Pearson correlation coefficient from the data."
+    ),
+    "TrendForecasting": (
+        "\nCompute the predicted/forecasted numeric value(s). "
+        "Output only the number(s), comma-separated if multiple. Round to 2 decimal places."
+    ),
+    "StatisticalAnalysis": (
+        "\nCompute the exact numeric answer. Output only the number(s). "
+        "Round to 2 decimal places if needed."
+    ),
+    "DescriptiveAnalysis": (
+        "\nProvide a detailed 2-4 sentence description covering key patterns, "
+        "notable values, and trends observed in the data. Be specific with numbers."
+    ),
+    "AnomalyDetection": (
+        "\nIdentify anomalies and explain WHY each is anomalous in 2-3 sentences. "
+        "Reference specific values and how they deviate from the norm."
+    ),
+    "CausalAnalysis": (
+        "\nExplain the causal relationship in 2-3 sentences. Include correlation "
+        "coefficients where relevant and state direction (positive/negative)."
+    ),
+}
+
+
 def table_to_csv(table: dict) -> str:
     """Convert TableBench table dict to CSV string."""
     cols = table["columns"]
@@ -114,8 +147,13 @@ def main():
             csv_path = tmp / f"{sample['id']}.csv"
             csv_path.write_text(table_to_csv(sample["table"]), encoding="utf-8")
 
+            question = sample["question"]
+            hint = QTYPE_HINTS.get(sample.get("qsubtype", ""), "")
+            if hint:
+                question = question + hint
+
             conversation = [
-                Message(role=MessageRole.user, content=sample["question"]),
+                Message(role=MessageRole.user, content=question),
             ]
 
             try:

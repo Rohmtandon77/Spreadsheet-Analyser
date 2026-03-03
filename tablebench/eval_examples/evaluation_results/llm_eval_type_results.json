@@ -1,0 +1,80 @@
+{
+    "DeepSeek-R1-Distill-Qwen-32B/DP": {
+        "FactChecking": {
+            "EM": 65.49,
+            "EM_with_error_2": 66.2,
+            "EM_with_error_5": 66.2,
+            "EM_with_error_10": 66.2,
+            "ROUGE-L": 72.07,
+            "Parse@1": 100.0,
+            "total": 142
+        },
+        "NumericalReasoning": {
+            "EM": 67.11,
+            "EM_with_error_2": 67.79,
+            "EM_with_error_5": 68.01,
+            "EM_with_error_10": 68.01,
+            "ROUGE-L": 70.26,
+            "Parse@1": 100.0,
+            "total": 447
+        },
+        "DataAnalysis": {
+            "EM": 8.16,
+            "EM_with_error_2": 8.16,
+            "EM_with_error_5": 9.04,
+            "EM_with_error_10": 9.04,
+            "ROUGE-L": 22.42,
+            "Mix_Metric": 13.23,
+            "Parse@1": 99.71,
+            "total": 343
+        },
+        "Visualization": {
+            "total": 54,
+            "ECR@1": 0.0,
+            "Pass@1": 0.0
+        },
+        "Overall": {
+            "Mix_Metric": 44.46,
+            "Parse@1": 94.42
+        }
+    },
+    "o3-mini-2025-01-31/DP": {
+        "FactChecking": {
+            "EM": 83.33,
+            "EM_with_error_2": 83.33,
+            "EM_with_error_5": 83.33,
+            "EM_with_error_10": 83.33,
+            "ROUGE-L": 96.67,
+            "Parse@1": 100.0,
+            "total": 6
+        },
+        "NumericalReasoning": {
+            "EM": 87.5,
+            "EM_with_error_2": 87.5,
+            "EM_with_error_5": 87.5,
+            "EM_with_error_10": 87.5,
+            "ROUGE-L": 87.5,
+            "Parse@1": 100.0,
+            "total": 24
+        },
+        "DataAnalysis": {
+            "EM": 14.29,
+            "EM_with_error_2": 14.29,
+            "EM_with_error_5": 14.29,
+            "EM_with_error_10": 14.29,
+            "ROUGE-L": 36.66,
+            "Mix_Metric": 26.0,
+            "Parse@1": 100.0,
+            "total": 21
+        },
+        "Visualization": {
+            "total": 3,
+            "ECR@1": 100.0,
+            "Pass@1": 33.33
+        },
+        "Overall": {
+            "Mix_Metric": 58.28,
+            "Parse@1": 100.0
+        }
+    }
+}
