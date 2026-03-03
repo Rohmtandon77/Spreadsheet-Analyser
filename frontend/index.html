@@ -531,6 +531,18 @@
       vertical-align: middle;
     }
 
+    .inline-loading {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.85rem 1.25rem;
+      background: #1e2a3a;
+      border: 1px solid #2d3d50;
+      border-radius: 14px;
+      color: #8896a8;
+      font-size: 0.82rem;
+    }
+
     .message .stdout-block {
       background: #151e2c;
       color: #5eead4;
@@ -906,11 +918,27 @@
       }
     }
 
+    function showInlineLoading() {
+      removeInlineLoading();
+      const el = document.createElement("div");
+      el.className = "inline-loading";
+      el.id = "inlineLoading";
+      el.innerHTML = '<span class="spinner"></span> Analyzing...';
+      messagesContainer.appendChild(el);
+      document.querySelector(".main-col").scrollTo({ top: document.querySelector(".main-col").scrollHeight, behavior: "smooth" });
+    }
+
+    function removeInlineLoading() {
+      const el = document.getElementById("inlineLoading");
+      if (el) el.remove();
+    }
+
     async function startPolling() {
       if (polling) return;
       polling = true;
       followupRow.style.pointerEvents = "none";
       followupRow.style.opacity = "0.5";
+      showInlineLoading();
 
       let pollBackoff = 1500;
       while (polling) {
@@ -923,6 +951,7 @@
 
           if (data.status === "completed" || data.status === "failed") {
             polling = false;
+            removeInlineLoading();
             await fetchAndRenderResults();
             if (data.status === "failed" && data.error) {
               showError("Analysis failed: " + data.error);
