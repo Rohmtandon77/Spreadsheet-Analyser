@@ -185,6 +185,41 @@ async def get_job_results(
     )
 
 
+@router.delete("/{job_id}", status_code=204)
+async def delete_job(
+    job_id: uuid.UUID,
+    session: AsyncSession = Depends(get_session),
+):
+    """Delete a job and all related messages/artifacts."""
+    stmt = (
+        select(Job)
+        .where(Job.id == job_id)
+        .options(selectinload(Job.messages), selectinload(Job.artifacts))
+    )
+    result = await session.execute(stmt)
+    job = result.scalar_one_or_none()
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    for artifact in job.artifacts:
+        try:
+            Path(artifact.file_path).unlink(missing_ok=True)
+        except OSError:
+            pass
+        await session.delete(artifact)
+    for message in job.messages:
+        await session.delete(message)
+
+    # Remove uploaded file
+    try:
+        Path(job.file_path).unlink(missing_ok=True)
+    except OSError:
+        pass
+
+    await session.delete(job)
+    await session.commit()
+
+
 def _parse_file_metadata(file_path) -> tuple[int | None, int | None]:
     """Best-effort extraction of row/column counts from an uploaded file."""
     try:

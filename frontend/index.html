@@ -114,7 +114,26 @@
       display: flex;
       flex-direction: column;
       gap: 0.15rem;
+      position: relative;
     }
+
+    .sidebar-item .btn-delete-job {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.4rem;
+      background: none;
+      border: none;
+      color: #6b7f96;
+      font-size: 0.9rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+      padding: 0 0.2rem;
+      line-height: 1;
+    }
+
+    .sidebar-item:hover .btn-delete-job { opacity: 1; }
+    .sidebar-item .btn-delete-job:hover { color: #f87171; }
 
     .sidebar-item:hover {
       background: #2d3f52;
@@ -358,20 +377,18 @@
 
     /* Chat / conversation */
     .chat-section {
-      background: #1e2a3a;
-      border: 1px solid #2d3d50;
-      border-radius: 14px;
-      overflow: hidden;
       margin-bottom: 1.5rem;
     }
 
     .chat-header {
       padding: 0.75rem 1.25rem;
-      border-bottom: 1px solid #2d3d50;
+      border: 1px solid #2d3d50;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       gap: 0.75rem;
       background: #172030;
+      margin-bottom: 0.75rem;
     }
 
     .chat-header .status-dot {
@@ -405,17 +422,16 @@
     }
 
     .messages {
-      padding: 1.25rem;
-      max-height: 60vh;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
-    .messages::-webkit-scrollbar { width: 6px; }
-    .messages::-webkit-scrollbar-track { background: transparent; }
-    .messages::-webkit-scrollbar-thumb { background: #3b4a5c; border-radius: 3px; }
-
     .message {
-      margin-bottom: 1.5rem;
+      background: #1e2a3a;
+      border: 1px solid #2d3d50;
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
     }
 
     .message .role {
@@ -532,8 +548,10 @@
       display: flex;
       gap: 0.5rem;
       padding: 0.85rem 1.25rem;
-      border-top: 1px solid #2d3d50;
       background: #172030;
+      border: 1px solid #2d3d50;
+      border-radius: 14px;
+      margin-top: 0.75rem;
     }
 
     .followup-row input {
@@ -972,7 +990,7 @@
         showError(`Job error: ${data.job.error}`);
       }
 
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      document.querySelector(".main-col").scrollTo({ top: document.querySelector(".main-col").scrollHeight, behavior: "smooth" });
       speakLatestIfNew();
     }
 
@@ -1163,6 +1181,7 @@
       const time = new Date(job.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
       const question = job.first_question ? escapeHtml(job.first_question.substring(0, 60)) : "";
       item.innerHTML = `
+        <button class="btn-delete-job" title="Delete chat">&times;</button>
         <div class="item-filename">${escapeHtml(job.original_filename)}</div>
         ${question ? `<div class="item-question">${question}</div>` : ""}
         <div class="item-meta">
@@ -1172,6 +1191,10 @@
           <span>${time}</span>
         </div>
       `;
+      item.querySelector(".btn-delete-job").addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteJob(job.id);
+      });
       item.addEventListener("click", () => loadJob(job.id, job.original_filename));
       return item;
     }
@@ -1199,6 +1222,24 @@
         btn.textContent = "Show less";
         btn.addEventListener("click", () => { _sidebarExpanded = false; renderSidebar(); });
         sidebarList.appendChild(btn);
+      }
+    }
+
+    async function deleteJob(jobId) {
+      if (!confirm("Delete this chat?")) return;
+      try {
+        await fetch(`${API}/jobs/${jobId}`, { method: "DELETE" });
+        _sidebarJobs = _sidebarJobs.filter(j => j.id !== jobId);
+        renderSidebar();
+        if (currentJobId === jobId) {
+          currentJobId = null;
+          localStorage.removeItem("sa_current_job");
+          polling = false;
+          chatSection.classList.add("hidden");
+          uploadSection.classList.remove("hidden");
+        }
+      } catch (e) {
+        console.warn("Delete failed:", e);
       }
     }
 
