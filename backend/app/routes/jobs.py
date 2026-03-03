@@ -15,6 +15,7 @@ from backend.app.models import Artifact, Job, JobStatus, Message, MessageRole
 from backend.app.queue import enqueue_job
 from backend.app.schemas import (
     ArtifactOut,
+    JobListItem,
     JobOut,
     JobResultsResponse,
     JobStatusResponse,
@@ -33,6 +34,33 @@ def _artifact_url(artifact: Artifact) -> str | None:
         return None
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+
+@router.get("", response_model=list[JobListItem])
+async def list_jobs(
+    limit: int = 50,
+    session: AsyncSession = Depends(get_session),
+):
+    """List recent jobs, newest first."""
+    stmt = (
+        select(Job)
+        .options(selectinload(Job.messages))
+        .order_by(Job.created_at.desc())
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    items = []
+    for job in result.scalars():
+        first_q = next((m.content for m in job.messages if m.role == MessageRole.user), None)
+        item = JobListItem(
+            id=job.id,
+            status=job.status,
+            original_filename=job.original_filename,
+            created_at=job.created_at,
+            first_question=first_q,
+        )
+        items.append(item)
+    return items
 
 
 @router.post("", response_model=JobSubmitResponse, status_code=201)

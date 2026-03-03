@@ -31,6 +31,16 @@ class JobOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class JobListItem(BaseModel):
+    id: uuid.UUID
+    status: JobStatus
+    original_filename: str
+    created_at: datetime
+    first_question: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class JobSubmitResponse(BaseModel):
     job_id: uuid.UUID
 

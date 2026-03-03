@@ -78,6 +78,12 @@ def results(ctx, job_id, download_charts):
         role_color = "cyan" if msg["role"] == "user" else "green"
         click.secho(f"\n[{msg['role'].upper()}]", fg=role_color, bold=True)
         click.echo(msg["content"])
+        if msg.get("thinking"):
+            click.secho("\n--- thinking ---", fg="bright_black")
+            click.echo(msg["thinking"][:500])
+            if len(msg["thinking"]) > 500:
+                click.secho("  ... (truncated)", fg="bright_black")
+            click.secho("--- end thinking ---", fg="bright_black")
         if msg.get("code"):
             click.secho("\n--- code ---", fg="bright_black")
             click.echo(msg["code"])

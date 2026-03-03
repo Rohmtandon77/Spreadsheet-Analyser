@@ -14,10 +14,108 @@
       min-height: 100vh;
     }
 
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: #0f1628;
+      border-right: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 1.25rem 1rem 0.75rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .sidebar-header h2 {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .sidebar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem 0;
+    }
+
+    .sidebar-item {
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .sidebar-item:hover { background: rgba(129, 140, 248, 0.06); }
+
+    .sidebar-item.active {
+      background: rgba(129, 140, 248, 0.1);
+      border-left-color: #818cf8;
+    }
+
+    .sidebar-item .item-filename {
+      font-size: 0.82rem;
+      color: #e2e8f0;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-item .item-question {
+      font-size: 0.72rem;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sidebar-item .item-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.68rem;
+      color: #475569;
+      margin-top: 0.1rem;
+    }
+
+    .sidebar-item .item-status {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .sidebar-item .item-status.completed { background: #34d399; }
+    .sidebar-item .item-status.failed { background: #f87171; }
+    .sidebar-item .item-status.pending { background: #f59e0b; }
+    .sidebar-item .item-status.processing { background: #38bdf8; }
+
+    .sidebar-empty {
+      padding: 1.5rem 1rem;
+      color: #475569;
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
     .container {
       max-width: 880px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
+      flex: 1;
+      min-width: 0;
     }
 
     header {
@@ -460,6 +558,13 @@
   </style>
 </head>
 <body>
+  <div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header"><h2>Job History</h2></div>
+    <div class="sidebar-list" id="sidebarList">
+      <div class="sidebar-empty">No jobs yet</div>
+    </div>
+  </aside>
   <div class="container">
     <header>
       <h1>Spreadsheet Analysis</h1>
@@ -507,10 +612,12 @@
       </div>
     </div>
   </div>
+  </div><!-- /app-layout -->
 
   <script>
     const API = window.location.origin;
     const MIC_SVG = '<svg class="mic-svg" viewBox="0 0 24 24" width="16" height="16"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+    const sidebarList = document.getElementById("sidebarList");
     let currentJobId = null;
     let selectedFile = null;
     let polling = false;
@@ -598,13 +705,16 @@
         }
         const data = await res.json();
         currentJobId = data.job_id;
+        localStorage.setItem("sa_current_job", data.job_id);
 
         chatFileName.textContent = selectedFile.name;
         chatSection.classList.remove("hidden");
         messagesContainer.innerHTML = "";
         questionInput.value = "";
+        _lastSpokenMsgCount = 0;
         updateSubmitState();
         setStatus("pending");
+        loadSidebar();
         startPolling();
       } catch (e) {
         showError(e.message);
@@ -664,6 +774,7 @@
             followupRow.style.pointerEvents = "";
             followupRow.style.opacity = "";
             followupInput.focus();
+            loadSidebar();
             break;
           }
         } catch (e) {
@@ -896,6 +1007,87 @@
         if (text) playTTS(text, btn);
       }
     });
+
+    // --- Job History Sidebar ---
+    async function loadSidebar() {
+      try {
+        const res = await fetch(`${API}/jobs`);
+        if (!res.ok) return;
+        const jobs = await res.json();
+        if (jobs.length === 0) {
+          sidebarList.innerHTML = '<div class="sidebar-empty">No jobs yet</div>';
+          return;
+        }
+        sidebarList.innerHTML = "";
+        for (const job of jobs) {
+          const item = document.createElement("div");
+          item.className = "sidebar-item" + (job.id === currentJobId ? " active" : "");
+          item.dataset.jobId = job.id;
+          const time = new Date(job.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+          const question = job.first_question ? escapeHtml(job.first_question.substring(0, 60)) : "";
+          item.innerHTML = `
+            <div class="item-filename">${escapeHtml(job.original_filename)}</div>
+            ${question ? `<div class="item-question">${question}</div>` : ""}
+            <div class="item-meta">
+              <span class="item-status ${job.status}"></span>
+              <span>${job.status}</span>
+              <span>&middot;</span>
+              <span>${time}</span>
+            </div>
+          `;
+          item.addEventListener("click", () => loadJob(job.id, job.original_filename));
+          sidebarList.appendChild(item);
+        }
+      } catch (e) {
+        console.warn("Sidebar load failed:", e);
+      }
+    }
+
+    async function loadJob(jobId, filename) {
+      currentJobId = jobId;
+      localStorage.setItem("sa_current_job", jobId);
+
+      chatSection.classList.remove("hidden");
+      chatFileName.textContent = filename || "File";
+      messagesContainer.innerHTML = "";
+      _lastSpokenMsgCount = 0;
+
+      // Highlight in sidebar
+      document.querySelectorAll(".sidebar-item").forEach(el => {
+        el.classList.toggle("active", el.dataset.jobId === jobId);
+      });
+
+      // Check status
+      try {
+        const statusRes = await fetch(`${API}/jobs/${jobId}/status`);
+        if (statusRes.ok) {
+          const data = await statusRes.json();
+          setStatus(data.status);
+          if (data.status === "pending" || data.status === "processing") {
+            polling = false;
+            startPolling();
+          } else {
+            await fetchAndRenderResults();
+          }
+        }
+      } catch (e) {
+        showError("Failed to load job.");
+      }
+    }
+
+    // On page load: restore last job or load sidebar
+    (async function init() {
+      await loadSidebar();
+      const savedJob = localStorage.getItem("sa_current_job");
+      if (savedJob) {
+        // Find the job in sidebar to get filename
+        const item = document.querySelector(`.sidebar-item[data-job-id="${savedJob}"]`);
+        if (item) {
+          const filename = item.querySelector(".item-filename")?.textContent || "File";
+          await loadJob(savedJob, filename);
+        }
+      }
+    })();
   </script>
 </body>
 </html>
