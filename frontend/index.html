@@ -23,6 +23,7 @@
     header {
       margin-bottom: 2rem;
       text-align: center;
+      position: relative;
     }
 
     header h1 {
@@ -395,7 +396,9 @@
 
     /* TTS toggle */
     .tts-toggle {
-      margin-left: auto;
+      position: absolute;
+      top: 0;
+      right: 0;
       display: flex;
       align-items: center;
       gap: 0.35rem;
@@ -416,25 +419,36 @@
       transition: color 0.2s;
     }
 
+    .mic-svg {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vertical-align: -2px;
+    }
+
     .tts-toggle:hover .tts-toggle-label { color: #818cf8; }
     .tts-toggle input:checked ~ .tts-toggle-label { color: #818cf8; }
 
-    /* Speak button on answers */
+    /* Speak / mic button on answers */
     .btn-speak {
       background: none;
       border: 1px solid #334155;
       border-radius: 6px;
       color: #64748b;
       cursor: pointer;
-      font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
+      padding: 0.25rem 0.4rem;
       margin-left: 0.5rem;
       transition: all 0.2s;
-      vertical-align: middle;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .btn-speak:hover { color: #818cf8; border-color: #818cf8; }
     .btn-speak.speaking { color: #34d399; border-color: #34d399; }
+    .btn-speak.recording { color: #f87171; border-color: #f87171; animation: pulse 0.8s infinite; }
 
     .answer-header {
       display: flex;
@@ -450,6 +464,10 @@
     <header>
       <h1>Spreadsheet Analysis</h1>
       <p>Upload a CSV or Excel file and ask questions about your data.</p>
+      <label class="tts-toggle" id="convModeLabel" title="Voice conversation: speak questions, hear answers">
+        <input type="checkbox" id="ttsToggle">
+        <span class="tts-toggle-label"><svg class="mic-svg" viewBox="0 0 24 24" width="14" height="14"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Conversation mode</span>
+      </label>
     </header>
 
     <div id="errorBanner" class="error-banner hidden"></div>
@@ -469,7 +487,7 @@
 
       <div class="question-row">
         <input type="text" id="questionInput" placeholder="Ask a question about your data ..." />
-        <button class="btn-mic" id="micBtn" title="Record voice question">&#127908;</button>
+        <button class="btn-mic" id="micBtn" title="Record voice question"><svg class="mic-svg" viewBox="0 0 24 24" width="18" height="18"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
         <button class="btn btn-primary" id="submitBtn" disabled>Analyze</button>
       </div>
     </div>
@@ -480,15 +498,11 @@
         <span class="status-dot" id="statusDot"></span>
         <span class="file-label" id="chatFileName"></span>
         <span class="status-text" id="statusText"></span>
-        <label class="tts-toggle" title="Voice conversation: speak questions, hear answers">
-          <input type="checkbox" id="ttsToggle">
-          <span class="tts-toggle-label">&#127908; Conversation mode</span>
-        </label>
       </div>
       <div class="messages" id="messagesContainer"></div>
       <div class="followup-row" id="followupRow">
         <input type="text" id="followupInput" placeholder="Ask a follow-up question ..." />
-        <button class="btn-mic" id="micFollowupBtn" title="Record voice follow-up">&#127908;</button>
+        <button class="btn-mic" id="micFollowupBtn" title="Record voice follow-up"><svg class="mic-svg" viewBox="0 0 24 24" width="18" height="18"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
         <button class="btn btn-primary" id="followupBtn">Send</button>
       </div>
     </div>
@@ -496,6 +510,7 @@
 
   <script>
     const API = window.location.origin;
+    const MIC_SVG = '<svg class="mic-svg" viewBox="0 0 24 24" width="16" height="16"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
     let currentJobId = null;
     let selectedFile = null;
     let polling = false;
@@ -675,7 +690,7 @@
         if (msg.role === "assistant") {
           const answerText = escapeHtml(msg.content);
           const safeAttr = msg.content.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
-          html += `<div class="answer-header"><div class="final-answer">${answerText}</div><button class="btn-speak" data-text="${safeAttr}" title="Read aloud / Speak follow-up">&#127908;</button></div>`;
+          html += `<div class="answer-header"><div class="final-answer">${answerText}</div><button class="btn-speak" data-text="${safeAttr}" title="Read aloud / Speak follow-up">${MIC_SVG}</button></div>`;
           if (msg.thinking) {
             html += `<details class="collapsible"><summary>View thought process</summary><div class="thinking-block">${escapeHtml(msg.thinking)}</div></details>`;
           }
@@ -764,7 +779,7 @@
           mediaRecorder.onstop = async () => {
             stream.getTracks().forEach(t => t.stop());
             btn.classList.remove("recording");
-            btn.innerHTML = "&#127908;";
+            btn.innerHTML = MIC_SVG;
 
             const blob = new Blob(chunks, { type: "audio/webm" });
             const form = new FormData();
@@ -786,7 +801,7 @@
             } catch (e) {
               showError("Voice transcription failed: " + e.message);
             } finally {
-              btn.innerHTML = "&#127908;";
+              btn.innerHTML = MIC_SVG;
             }
           };
 
@@ -813,11 +828,11 @@
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
-        audio.onended = () => { if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#127908;"; } };
+        audio.onended = () => { if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = MIC_SVG; } };
         audio.play();
       } catch (e) {
         console.warn("TTS playback failed:", e);
-        if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#127908;"; }
+        if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = MIC_SVG; }
       }
     }
 
@@ -854,7 +869,7 @@
           _inlineMicRecorder.onstop = async () => {
             stream.getTracks().forEach(t => t.stop());
             btn.classList.remove("recording");
-            btn.innerHTML = "&#127908;";
+            btn.innerHTML = MIC_SVG;
             const blob = new Blob(_inlineMicChunks, { type: "audio/webm" });
             const form = new FormData();
             form.append("audio", blob, "recording.webm");
@@ -868,7 +883,7 @@
             } catch (err) {
               showError("Voice transcription failed: " + err.message);
             } finally {
-              btn.innerHTML = "&#127908;";
+              btn.innerHTML = MIC_SVG;
             }
           };
           _inlineMicRecorder.start();
