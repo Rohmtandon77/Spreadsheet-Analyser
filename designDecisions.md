@@ -19,14 +19,14 @@ This document captures the key architectural and technical decisions made during
 
 ## 2. Serving Framework
 
-**Decision**: vLLM with tensor-parallel-size=4, max-model-len=8192
+**Decision**: vLLM with tensor-parallel-size=4, max-model-len=8192, max_tokens=2048
 
 **Alternatives considered**:
 - TGI (Text Generation Inference) -- strong but less flexible batching.
 - Direct HuggingFace transformers -- no request batching, much lower throughput.
 - Ollama -- simpler setup but no tensor parallelism for large models.
 
-**Rationale**: vLLM provides automatic continuous batching (handles concurrent requests efficiently), PagedAttention for memory efficiency, and native tensor parallelism. The OpenAI-compatible API means the worker code is framework-agnostic -- switching models or serving frameworks requires zero code changes.
+**Rationale**: vLLM provides automatic continuous batching (handles concurrent requests efficiently), PagedAttention for memory efficiency, and native tensor parallelism. The OpenAI-compatible API means the worker code is framework-agnostic -- switching models or serving frameworks requires zero code changes. We set `max_tokens=2048` (output) to leave 6144 tokens for input (system prompt + schema + conversation history). The schema summary is capped (3 sample rows, 10 numeric columns for stats) and conversation history is trimmed to the last 6 messages to prevent context window overflow on large datasets with many follow-ups.
 
 ---
 
@@ -82,7 +82,7 @@ This document captures the key architectural and technical decisions made during
 
 ---
 
-## 7. Frontend
+## 7. Frontend Architecture
 
 **Decision**: Single-page vanilla HTML/CSS/JS, served by FastAPI's StaticFiles.
 
@@ -91,7 +91,27 @@ This document captures the key architectural and technical decisions made during
 - Gradio -- quick prototyping but limited customisation and opinionated styling.
 - Streamlit -- Python-native but server-side rendering isn't ideal for real-time polling.
 
-**Rationale**: A single `index.html` with no build tools means zero frontend dependencies, instant hot-reload, and simple deployment. The UI requirements (file upload, text input, status polling, message display, charts) don't need a component framework. The dark-mode design uses CSS custom properties for easy theming.
+**Rationale**: A single `index.html` with no build tools means zero frontend dependencies, instant hot-reload, and simple deployment. The UI requirements (file upload, text input, status polling, message display, charts) don't need a component framework.
+
+---
+
+## 7a. Frontend Design & UX Decisions
+
+**Branding & Colour scheme**: The app is branded "SpreadX". We iterated through several themes (dark blue → dark green → light faded green → soft beige) based on user feedback. The final palette uses a soft beige background (#f0ece4) for the page, with blue-grey panels (#1e2a3a, #253545) for the sidebar and content cards, and teal/cyan accents (#5eead4, #0ea5e9) for interactive states. The title is dark grey (#3a3f47) for readability on the light background.
+
+**Sticky top bar**: The SpreadX title, subtitle, and Conversation Mode toggle sit in a `position: sticky` bar that stays pinned during scroll. A flex spacer ensures the title stays visually centred between the toggle and the left edge.
+
+**Message layout**: Rather than a single monolithic chat rectangle with internal scroll, each message (user question, assistant answer) is rendered as an independent rounded card with spacing between them. The entire main column scrolls, not an inner container. This gives a cleaner, more modern feel and avoids the "trapped in a box" experience.
+
+**Collapsible sections**: The LLM's chain-of-thought reasoning (`<think>` tags), generated code, and execution output are wrapped in collapsible `<details>` sections. The "Final Answer" is displayed prominently. This keeps the UI clean while still making all details accessible.
+
+**Job history sidebar**: A left-hand sidebar shows past jobs (filename, first question, status, timestamp) in rounded "bubble" cards. It defaults to showing 5 items with a "Show X more" expander. Jobs can be deleted via an × button (appears on hover). A "New Chat" button resets to the upload screen. The current job ID is persisted in `localStorage` for cross-refresh continuity.
+
+**Conversation mode**: A toggleable mode (pill button in the top bar) that, when active, enables voice-driven workflows -- mic input auto-submits questions and answers are auto-spoken via TTS. When off, per-answer mic buttons provide on-demand playback. TTS playback is tracked globally so re-clicking stops the current audio (no double-play).
+
+**Inline loading**: When a job is processing, an "Analyzing..." card with a spinner appears at the bottom of the message list (not just in the header), auto-scrolling to stay visible. This is more intuitive than a status indicator at the top of the page.
+
+**Drag-and-drop upload**: The file upload zone supports both click-to-browse and drag-and-drop, with visual feedback (border highlight, file name display). Accepted formats are CSV and Excel.
 
 ---
 

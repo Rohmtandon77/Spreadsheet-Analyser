@@ -1,4 +1,4 @@
-# Spreadsheet Analysis Service
+# SpreadX — Spreadsheet Analysis Service
 
 An end-to-end system for analysing spreadsheet data using a locally-served open-source LLM. Upload a CSV or Excel file, ask questions in natural language, and get computed answers with charts -- via a Web UI, CLI, or REST API.
 
@@ -107,16 +107,18 @@ Key endpoints:
 
 | Method | Path | Description |
 |--------|------|-------------|
+| GET    | `/jobs` | List recent jobs |
 | POST   | `/jobs` | Submit file + question |
 | GET    | `/jobs/{id}/status` | Check job status |
 | GET    | `/jobs/{id}/results` | Get full results |
 | POST   | `/jobs/{id}/followup` | Ask follow-up |
+| DELETE | `/jobs/{id}` | Delete a job |
 | POST   | `/voice/stt` | Speech-to-text |
 | POST   | `/voice/tts` | Text-to-speech |
 
-### Voice
+### Voice / Conversation Mode
 
-The Web UI has mic buttons for voice input (STT) and auto-speaks results (TTS). Both run locally -- no external API calls.
+The Web UI has a **Conversation Mode** toggle (top bar). When enabled, mic buttons auto-submit questions and answers are auto-spoken via TTS. When disabled, per-answer mic buttons provide on-demand playback. Both STT (Whisper) and TTS (Piper) run fully locally -- no external API calls.
 
 ## Evaluation (TableBench)
 
@@ -150,6 +152,38 @@ All settings are env-configurable (see `.env.example`):
 | `WHISPER_MODEL_SIZE` | `large-v3` | Whisper model |
 | `WHISPER_DEVICE_INDEX` | `4` | GPU for Whisper |
 | `PIPER_VOICE_ID` | `en_US-ryan-high` | Piper TTS voice |
+
+## Running All Services
+
+To start everything (vLLM + API + workers) in background mode:
+
+```bash
+source .venv/bin/activate
+
+# 1. Start vLLM (takes ~2 min to load model)
+CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m vllm.entrypoints.openai.api_server \
+  --model deepseek-ai/DeepSeek-R1-Distill-Qwen-32B \
+  --tensor-parallel-size 4 --max-model-len 8192 --dtype bfloat16 \
+  > /tmp/vllm.log 2>&1 &
+
+# 2. Start FastAPI
+nohup uvicorn backend.app.main:app --host 0.0.0.0 --port 8080 > /tmp/api.log 2>&1 &
+
+# 3. Start workers (4 concurrent)
+for i in 1 2 3 4; do
+  nohup python -m worker.main > /tmp/worker$i.log 2>&1 &
+done
+```
+
+To stop everything:
+
+```bash
+pkill -f "vllm.entrypoints"
+fuser -k 8080/tcp
+pkill -f "worker.main"
+```
+
+**Remote access**: `ssh -L 9090:localhost:8080 your-server -N`, then open `http://localhost:9090`.
 
 ## Load Testing
 
