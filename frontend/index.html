@@ -806,6 +806,9 @@
       messagesContainer.innerHTML = "";
       _lastSpokenMsgCount = 0;
       hideError();
+      resetFollowupRow();
+      removeInlineLoading();
+      stopTTS();
       document.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
     });
 
@@ -1120,20 +1123,42 @@
       convToggle.classList.toggle("active", convModeOn);
     });
 
+    let _currentAudio = null;
+    let _currentSpeakBtn = null;
+
+    function stopTTS() {
+      if (_currentAudio) {
+        _currentAudio.pause();
+        _currentAudio.currentTime = 0;
+        _currentAudio = null;
+      }
+      if (_currentSpeakBtn) {
+        _currentSpeakBtn.classList.remove("speaking");
+        _currentSpeakBtn.innerHTML = MIC_SVG;
+        _currentSpeakBtn = null;
+      }
+    }
+
     async function playTTS(text, speakBtn) {
+      if (_currentAudio && _currentSpeakBtn === speakBtn) {
+        stopTTS();
+        return;
+      }
+      stopTTS();
       try {
         if (speakBtn) { speakBtn.classList.add("speaking"); speakBtn.textContent = "..."; }
+        _currentSpeakBtn = speakBtn;
         const truncated = text.substring(0, 500);
         const res = await fetch(`${API}/voice/tts?text=${encodeURIComponent(truncated)}`, { method: "POST" });
-        if (!res.ok) return;
+        if (!res.ok) { stopTTS(); return; }
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        audio.onended = () => { if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = MIC_SVG; } };
-        audio.play();
+        _currentAudio = new Audio(url);
+        _currentAudio.onended = () => stopTTS();
+        _currentAudio.play();
       } catch (e) {
         console.warn("TTS playback failed:", e);
-        if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = MIC_SVG; }
+        stopTTS();
       }
     }
 
@@ -1283,11 +1308,18 @@
       }
     }
 
+    function resetFollowupRow() {
+      followupRow.style.pointerEvents = "";
+      followupRow.style.opacity = "";
+    }
+
     async function loadJob(jobId, filename) {
       currentJobId = jobId;
       localStorage.setItem("sa_current_job", jobId);
       polling = false;
       hideError();
+      resetFollowupRow();
+      removeInlineLoading();
 
       uploadSection.classList.add("hidden");
       chatSection.classList.remove("hidden");
