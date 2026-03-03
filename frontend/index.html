@@ -9,7 +9,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: #0a0e1a;
+      background: #0c1a14;
       color: #e2e8f0;
       min-height: 100vh;
     }
@@ -21,53 +21,113 @@
 
     /* Sidebar */
     .sidebar {
-      width: 260px;
-      min-width: 260px;
-      background: #0f1628;
-      border-right: 1px solid #1e293b;
+      width: 270px;
+      min-width: 270px;
+      background: #0a1510;
+      border-right: 1px solid #1a2e22;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transition: width 0.25s, min-width 0.25s;
     }
 
+    .sidebar.collapsed {
+      width: 0;
+      min-width: 0;
+      border-right: none;
+    }
+
+    .sidebar.collapsed .sidebar-header,
+    .sidebar.collapsed .sidebar-list { display: none; }
+
+    .sidebar-toggle {
+      position: fixed;
+      top: 0.75rem;
+      left: 0.75rem;
+      z-index: 100;
+      background: #111c15;
+      border: 1px solid #1a2e22;
+      border-radius: 6px;
+      color: #64748b;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+    }
+
+    .sidebar-toggle:hover { color: #34d399; border-color: #34d399; }
+
     .sidebar-header {
-      padding: 1.25rem 1rem 0.75rem;
-      border-bottom: 1px solid #1e293b;
+      padding: 1rem 0.75rem 0.65rem;
+      border-bottom: 1px solid #1a2e22;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
     }
 
     .sidebar-header h2 {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: #64748b;
       font-weight: 600;
+      margin-left: 2rem;
     }
+
+    .btn-new-chat {
+      background: linear-gradient(135deg, #166534, #15803d);
+      border: none;
+      border-radius: 6px;
+      color: #d1fae5;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.35rem 0.7rem;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-new-chat:hover { background: linear-gradient(135deg, #15803d, #16a34a); }
 
     .sidebar-list {
       flex: 1;
       overflow-y: auto;
-      padding: 0.5rem 0;
+      padding: 0.5rem 0.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
     }
 
     .sidebar-item {
-      padding: 0.6rem 1rem;
+      padding: 0.55rem 0.7rem;
       cursor: pointer;
       border-left: 3px solid transparent;
+      border-radius: 8px;
+      background: #0e1f16;
+      border: 1px solid #1a2e22;
       transition: all 0.15s;
       display: flex;
       flex-direction: column;
       gap: 0.15rem;
     }
 
-    .sidebar-item:hover { background: rgba(129, 140, 248, 0.06); }
+    .sidebar-item:hover {
+      background: rgba(52, 211, 153, 0.06);
+      border-color: #2a4a36;
+    }
 
     .sidebar-item.active {
-      background: rgba(129, 140, 248, 0.1);
-      border-left-color: #818cf8;
+      background: rgba(52, 211, 153, 0.1);
+      border-color: #34d399;
     }
 
     .sidebar-item .item-filename {
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       color: #e2e8f0;
       font-weight: 500;
       white-space: nowrap;
@@ -76,8 +136,8 @@
     }
 
     .sidebar-item .item-question {
-      font-size: 0.72rem;
-      color: #64748b;
+      font-size: 0.7rem;
+      color: #6b8f7b;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -87,8 +147,8 @@
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      font-size: 0.68rem;
-      color: #475569;
+      font-size: 0.65rem;
+      color: #4a6b58;
       margin-top: 0.1rem;
     }
 
@@ -104,8 +164,8 @@
     .sidebar-item .item-status.processing { background: #38bdf8; }
 
     .sidebar-empty {
-      padding: 1.5rem 1rem;
-      color: #475569;
+      padding: 1.5rem 0.75rem;
+      color: #4a6b58;
       font-size: 0.8rem;
       text-align: center;
     }
@@ -127,7 +187,7 @@
     header h1 {
       font-size: 1.75rem;
       font-weight: 800;
-      background: linear-gradient(135deg, #818cf8, #38bdf8, #34d399);
+      background: linear-gradient(135deg, #34d399, #5eead4, #86efac);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -141,15 +201,15 @@
 
     /* Upload section */
     .upload-section {
-      background: #111827;
-      border: 1px solid #1e293b;
+      background: #0e1f16;
+      border: 1px solid #1a2e22;
       border-radius: 14px;
       padding: 1.5rem;
       margin-bottom: 1.5rem;
     }
 
     .drop-zone {
-      border: 2px dashed #334155;
+      border: 2px dashed #2a4a36;
       border-radius: 10px;
       padding: 2.25rem;
       text-align: center;
@@ -159,8 +219,8 @@
     }
 
     .drop-zone:hover, .drop-zone.drag-over {
-      border-color: #818cf8;
-      background: rgba(129, 140, 248, 0.06);
+      border-color: #34d399;
+      background: rgba(52, 211, 153, 0.06);
     }
 
     .drop-zone .icon {
@@ -184,7 +244,7 @@
       align-items: center;
       gap: 0.75rem;
       padding: 0.65rem 1rem;
-      background: #1e293b;
+      background: #152a1e;
       border-radius: 8px;
       margin-bottom: 1rem;
       font-size: 0.82rem;
@@ -211,8 +271,8 @@
     .question-row input {
       flex: 1;
       padding: 0.7rem 0.9rem;
-      background: #1e293b;
-      border: 1px solid #334155;
+      background: #152a1e;
+      border: 1px solid #2a4a36;
       border-radius: 8px;
       font-size: 0.9rem;
       color: #e2e8f0;
@@ -221,7 +281,7 @@
     }
 
     .question-row input::placeholder { color: #475569; }
-    .question-row input:focus { border-color: #818cf8; }
+    .question-row input:focus { border-color: #34d399; }
 
     .btn {
       padding: 0.7rem 1.35rem;
@@ -234,26 +294,26 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #6366f1, #818cf8);
+      background: linear-gradient(135deg, #166534, #22c55e);
       color: #fff;
     }
 
     .btn-primary:hover {
-      background: linear-gradient(135deg, #4f46e5, #6366f1);
-      box-shadow: 0 0 20px rgba(99, 102, 241, 0.25);
+      background: linear-gradient(135deg, #15803d, #34d399);
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.25);
     }
 
     .btn-primary:disabled {
-      background: #1e293b;
-      color: #475569;
+      background: #152a1e;
+      color: #4a6b58;
       cursor: not-allowed;
       box-shadow: none;
     }
 
     /* Chat / conversation */
     .chat-section {
-      background: #111827;
-      border: 1px solid #1e293b;
+      background: #0e1f16;
+      border: 1px solid #1a2e22;
       border-radius: 14px;
       overflow: hidden;
       margin-bottom: 1.5rem;
@@ -261,11 +321,11 @@
 
     .chat-header {
       padding: 0.75rem 1.25rem;
-      border-bottom: 1px solid #1e293b;
+      border-bottom: 1px solid #1a2e22;
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      background: #0f172a;
+      background: #0a1510;
     }
 
     .chat-header .status-dot {
@@ -306,7 +366,7 @@
 
     .messages::-webkit-scrollbar { width: 6px; }
     .messages::-webkit-scrollbar-track { background: transparent; }
-    .messages::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .messages::-webkit-scrollbar-thumb { background: #2a4a36; border-radius: 3px; }
 
     .message {
       margin-bottom: 1.5rem;
@@ -320,7 +380,7 @@
       margin-bottom: 0.35rem;
     }
 
-    .message.user .role { color: #818cf8; }
+    .message.user .role { color: #5eead4; }
     .message.assistant .role { color: #34d399; }
 
     .message.user .content {
@@ -335,11 +395,11 @@
     }
 
     .message .code-block {
-      background: #0a0e1a;
-      color: #a5b4fc;
+      background: #081210;
+      color: #86efac;
       padding: 0.85rem 1rem;
       border-radius: 8px;
-      border: 1px solid #1e293b;
+      border: 1px solid #1a2e22;
       font-family: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
       font-size: 0.78rem;
       overflow-x: auto;
@@ -352,7 +412,7 @@
       max-width: 100%;
       border-radius: 10px;
       margin-top: 0.85rem;
-      border: 1px solid #1e293b;
+      border: 1px solid #1a2e22;
     }
 
     /* Final answer -- prominent */
@@ -366,11 +426,11 @@
 
     /* Thinking block */
     .thinking-block {
-      background: #0c1222;
+      background: #081210;
       color: #94a3b8;
       padding: 0.75rem 1rem;
       border-radius: 6px;
-      border: 1px solid #1e293b;
+      border: 1px solid #1a2e22;
       font-size: 0.82rem;
       line-height: 1.55;
       white-space: pre-wrap;
@@ -392,7 +452,7 @@
       transition: color 0.2s;
     }
 
-    .collapsible summary:hover { color: #818cf8; }
+    .collapsible summary:hover { color: #34d399; }
 
     /* Spinner */
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -401,8 +461,8 @@
       display: inline-block;
       width: 14px;
       height: 14px;
-      border: 2px solid #334155;
-      border-top-color: #818cf8;
+      border: 2px solid #2a4a36;
+      border-top-color: #34d399;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
       margin-left: 0.4rem;
@@ -410,11 +470,11 @@
     }
 
     .message .stdout-block {
-      background: #0f172a;
-      color: #38bdf8;
+      background: #081210;
+      color: #5eead4;
       padding: 0.55rem 0.85rem;
       border-radius: 6px;
-      border: 1px solid #1e293b;
+      border: 1px solid #1a2e22;
       font-family: monospace;
       font-size: 0.78rem;
       margin-top: 0.5rem;
@@ -426,32 +486,32 @@
       display: flex;
       gap: 0.5rem;
       padding: 0.85rem 1.25rem;
-      border-top: 1px solid #1e293b;
-      background: #0f172a;
+      border-top: 1px solid #1a2e22;
+      background: #0a1510;
     }
 
     .followup-row input {
       flex: 1;
       padding: 0.65rem 0.9rem;
-      background: #1e293b;
-      border: 1px solid #334155;
+      background: #152a1e;
+      border: 1px solid #2a4a36;
       border-radius: 8px;
       font-size: 0.9rem;
       color: #e2e8f0;
       outline: none;
     }
 
-    .followup-row input::placeholder { color: #475569; }
-    .followup-row input:focus { border-color: #818cf8; }
+    .followup-row input::placeholder { color: #4a6b58; }
+    .followup-row input:focus { border-color: #34d399; }
 
     /* Mic button */
     .btn-mic {
       width: 40px;
       height: 40px;
-      border: 1px solid #334155;
+      border: 1px solid #2a4a36;
       border-radius: 8px;
-      background: #1e293b;
-      color: #64748b;
+      background: #152a1e;
+      color: #6b8f7b;
       font-size: 1.1rem;
       cursor: pointer;
       display: flex;
@@ -461,7 +521,7 @@
       flex-shrink: 0;
     }
 
-    .btn-mic:hover { border-color: #818cf8; color: #818cf8; }
+    .btn-mic:hover { border-color: #34d399; color: #34d399; }
 
     .btn-mic.recording {
       background: rgba(239, 68, 68, 0.15);
@@ -505,7 +565,7 @@
     }
 
     .tts-toggle input[type="checkbox"] {
-      accent-color: #818cf8;
+      accent-color: #34d399;
       width: 15px;
       height: 15px;
       cursor: pointer;
@@ -526,15 +586,15 @@
       vertical-align: -2px;
     }
 
-    .tts-toggle:hover .tts-toggle-label { color: #818cf8; }
-    .tts-toggle input:checked ~ .tts-toggle-label { color: #818cf8; }
+    .tts-toggle:hover .tts-toggle-label { color: #34d399; }
+    .tts-toggle input:checked ~ .tts-toggle-label { color: #34d399; }
 
     /* Speak / mic button on answers */
     .btn-speak {
       background: none;
-      border: 1px solid #334155;
+      border: 1px solid #2a4a36;
       border-radius: 6px;
-      color: #64748b;
+      color: #6b8f7b;
       cursor: pointer;
       padding: 0.25rem 0.4rem;
       margin-left: 0.5rem;
@@ -544,7 +604,7 @@
       justify-content: center;
     }
 
-    .btn-speak:hover { color: #818cf8; border-color: #818cf8; }
+    .btn-speak:hover { color: #34d399; border-color: #34d399; }
     .btn-speak.speaking { color: #34d399; border-color: #34d399; }
     .btn-speak.recording { color: #f87171; border-color: #f87171; animation: pulse 0.8s infinite; }
 
@@ -558,9 +618,13 @@
   </style>
 </head>
 <body>
+  <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">&#9776;</button>
   <div class="app-layout">
-  <aside class="sidebar">
-    <div class="sidebar-header"><h2>Job History</h2></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>History</h2>
+      <button class="btn-new-chat" id="newChatBtn">+ New Chat</button>
+    </div>
     <div class="sidebar-list" id="sidebarList">
       <div class="sidebar-empty">No jobs yet</div>
     </div>
@@ -618,6 +682,9 @@
     const API = window.location.origin;
     const MIC_SVG = '<svg class="mic-svg" viewBox="0 0 24 24" width="16" height="16"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
     const sidebarList = document.getElementById("sidebarList");
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const newChatBtn = document.getElementById("newChatBtn");
     let currentJobId = null;
     let selectedFile = null;
     let polling = false;
@@ -640,6 +707,24 @@
     const followupBtn = document.getElementById("followupBtn");
     const followupRow = document.getElementById("followupRow");
     const errorBanner = document.getElementById("errorBanner");
+
+    // Sidebar toggle
+    sidebarToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+    });
+
+    // New chat
+    newChatBtn.addEventListener("click", () => {
+      currentJobId = null;
+      localStorage.removeItem("sa_current_job");
+      polling = false;
+      chatSection.classList.add("hidden");
+      uploadSection.classList.remove("hidden");
+      messagesContainer.innerHTML = "";
+      _lastSpokenMsgCount = 0;
+      hideError();
+      document.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
+    });
 
     // --- File handling ---
     dropZone.addEventListener("click", () => fileInput.click());
@@ -1046,7 +1131,10 @@
     async function loadJob(jobId, filename) {
       currentJobId = jobId;
       localStorage.setItem("sa_current_job", jobId);
+      polling = false;
+      hideError();
 
+      uploadSection.classList.add("hidden");
       chatSection.classList.remove("hidden");
       chatFileName.textContent = filename || "File";
       messagesContainer.innerHTML = "";
@@ -1064,7 +1152,6 @@
           const data = await statusRes.json();
           setStatus(data.status);
           if (data.status === "pending" || data.status === "processing") {
-            polling = false;
             startPolling();
           } else {
             await fetchAndRenderResults();
