@@ -16,7 +16,8 @@
 
     .app-layout {
       display: flex;
-      min-height: 100vh;
+      height: 100vh;
+      overflow: hidden;
     }
 
     /* Sidebar */
@@ -195,10 +196,17 @@
       display: flex;
       align-items: center;
       gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .top-bar-spacer {
+      width: 160px;
+      flex-shrink: 0;
     }
 
     .top-bar-text {
       flex: 1;
+      text-align: center;
     }
 
     .top-bar h1 {
@@ -614,7 +622,7 @@
     }
 
     .conv-toggle.active {
-      background: rgba(52, 211, 153, 0.12);
+      background: #1a6b42;
       border-color: #34d399;
       color: #34d399;
       box-shadow: 0 0 14px rgba(52, 211, 153, 0.25), 0 0 4px rgba(52, 211, 153, 0.15);
@@ -671,6 +679,7 @@
   </aside>
   <div class="main-col">
     <div class="top-bar">
+      <div class="top-bar-spacer"></div>
       <div class="top-bar-text">
         <h1>SpreadX</h1>
         <p>Upload a CSV or Excel file and ask questions about your data.</p>
