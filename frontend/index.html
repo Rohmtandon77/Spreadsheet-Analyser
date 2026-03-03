@@ -393,6 +393,55 @@
       margin-bottom: 1rem;
     }
 
+    /* TTS toggle */
+    .tts-toggle {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tts-toggle input[type="checkbox"] {
+      accent-color: #818cf8;
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
+
+    .tts-toggle-label {
+      font-size: 0.78rem;
+      color: #64748b;
+      transition: color 0.2s;
+    }
+
+    .tts-toggle:hover .tts-toggle-label { color: #818cf8; }
+    .tts-toggle input:checked ~ .tts-toggle-label { color: #818cf8; }
+
+    /* Speak button on answers */
+    .btn-speak {
+      background: none;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      margin-left: 0.5rem;
+      transition: all 0.2s;
+      vertical-align: middle;
+    }
+
+    .btn-speak:hover { color: #818cf8; border-color: #818cf8; }
+    .btn-speak.speaking { color: #34d399; border-color: #34d399; }
+
+    .answer-header {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
     .hidden { display: none; }
   </style>
 </head>
@@ -431,6 +480,10 @@
         <span class="status-dot" id="statusDot"></span>
         <span class="file-label" id="chatFileName"></span>
         <span class="status-text" id="statusText"></span>
+        <label class="tts-toggle" title="Auto-read answers aloud">
+          <input type="checkbox" id="ttsToggle">
+          <span class="tts-toggle-label">&#128264; Auto-speak</span>
+        </label>
       </div>
       <div class="messages" id="messagesContainer"></div>
       <div class="followup-row" id="followupRow">
@@ -620,7 +673,9 @@
         let html = `<div class="role">${msg.role}</div>`;
 
         if (msg.role === "assistant") {
-          html += `<div class="final-answer">${escapeHtml(msg.content)}</div>`;
+          const answerText = escapeHtml(msg.content);
+          const safeAttr = msg.content.replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+          html += `<div class="answer-header"><div class="final-answer">${answerText}</div><button class="btn-speak" data-text="${safeAttr}" title="Read aloud">&#128264;</button></div>`;
           if (msg.thinking) {
             html += `<details class="collapsible"><summary>View thought process</summary><div class="thinking-block">${escapeHtml(msg.thinking)}</div></details>`;
           }
@@ -742,29 +797,44 @@
     setupMic(micBtn, questionInput);
     setupMic(micFollowupBtn, followupInput);
 
-    async function playTTS(text) {
+    const ttsToggle = document.getElementById("ttsToggle");
+
+    async function playTTS(text, speakBtn) {
       try {
+        if (speakBtn) { speakBtn.classList.add("speaking"); speakBtn.textContent = "..."; }
         const truncated = text.substring(0, 500);
         const res = await fetch(`${API}/voice/tts?text=${encodeURIComponent(truncated)}`, { method: "POST" });
         if (!res.ok) return;
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
         const audio = new Audio(url);
+        audio.onended = () => { if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#128264;"; } };
         audio.play();
       } catch (e) {
         console.warn("TTS playback failed:", e);
+        if (speakBtn) { speakBtn.classList.remove("speaking"); speakBtn.innerHTML = "&#128264;"; }
       }
     }
 
     let _lastSpokenMsgCount = 0;
 
     function speakLatestIfNew() {
-      const msgs = document.querySelectorAll(".message.assistant .content");
-      if (msgs.length > _lastSpokenMsgCount) {
-        _lastSpokenMsgCount = msgs.length;
-        playTTS(msgs[msgs.length - 1].textContent);
+      if (!ttsToggle.checked) return;
+      const answers = document.querySelectorAll(".message.assistant .final-answer");
+      if (answers.length > _lastSpokenMsgCount) {
+        _lastSpokenMsgCount = answers.length;
+        const lastAnswer = answers[answers.length - 1];
+        const btn = lastAnswer.parentElement.querySelector(".btn-speak");
+        playTTS(lastAnswer.textContent, btn);
       }
     }
+
+    document.addEventListener("click", (e) => {
+      const btn = e.target.closest(".btn-speak");
+      if (!btn) return;
+      const text = btn.dataset.text;
+      if (text) playTTS(text, btn);
+    });
   </script>
 </body>
 </html>
